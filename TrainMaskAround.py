@@ -1,14 +1,13 @@
 import os
 import numpy as np
-from pathlib import Path
-from random import shuffle
-
 import torch
+import torch.nn as nn
+import torch.nn.functional as f
+import torch.optim as optim
 from PIL import Image
 from cv2 import imread
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
+from pathlib import Path
+from random import shuffle
 
 
 def train_and_test_files_paths(path: str = os.getcwd(), test_ratio: float = 0.2) -> list:
@@ -65,8 +64,8 @@ class Net(nn.Module):
         self.fc3 = nn.Linear(hidden_size, 2)
 
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        x = f.leaky_relu(self.fc1(x))
+        x = f.leaky_relu(self.fc2(x))
         x = self.fc3(x)
         return x
 
