@@ -41,5 +41,7 @@ def count_all_rgb_mask_combs(path_list):
 
 if __name__ == '__main__':
     train, test = get_train_test_paths()
-    rgb_value_count = count_all_rgb_mask_combs(train+test)
-    rgb_value_count.to_csv('rgb_value_count.csv')
+    rgb_train = count_all_rgb_mask_combs(train)
+    rgb_train.to_csv('rgb_train.csv', index=False)
+    rgb_test = count_all_rgb_mask_combs(test)
+    rgb_test.to_csv('rgb_test.csv', index=False)

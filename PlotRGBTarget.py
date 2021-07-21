@@ -2,17 +2,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import plotly.express as px
 
-if __name__ == '__main__':
-    df = pd.read_csv('rgb_value_count.csv')
+
+def rgb_graph(path):
+    df = pd.read_csv(path)
     df['value'] = (df['value'] > 128).astype(int)
     agg_df = df.groupby(['r', 'g', 'b']).agg({'value': np.mean, 'count': np.sum}).reset_index()
     sns.set(style="darkgrid")
 
     fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
+    ax = fig.add_subplot(111, projection='3d')  # redundant?
 
-    x = agg_df['r']
+    '''x = agg_df['r']
     y = agg_df['g']
     z = agg_df['b']
 
@@ -22,4 +24,11 @@ if __name__ == '__main__':
 
     ax.scatter(x, y, z, cmap='coolwarm', c=agg_df['value'])
 
-    plt.show()
+    plt.show()'''
+
+    fig = px.scatter_3d(agg_df, x='r', y='g', z='b', color='value')
+    fig.show()
+
+
+if __name__ == '__main__':
+    rgb_graph('rgb_value_count.csv')

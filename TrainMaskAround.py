@@ -55,9 +55,9 @@ def split_to_squares(image_path, length):
 
 
 def get_y(image_path, length):  # expected odd length
-    # get image from path
+    # get mask from path
     binary_array = imread(image_path, 0)
-    # store image height and width (in pixels)
+    # store mask height and width (in pixels)
     max_x, max_y = binary_array.shape
     # convert pixel colors to absolute black & white
     binary_array = (binary_array < 128).astype(int)
@@ -89,7 +89,7 @@ class Net(nn.Module):
 
 
 if __name__ == '__main__':
-    # ?
+    # length of the squared matrix
     input_image_length = 5
     # number of neurons in the second and third layer
     hidden_size = 12
@@ -113,18 +113,18 @@ if __name__ == '__main__':
         running_loss = 0
         for x, target in zip(X, y):
             # flatten the input pixel
-            x = torch.tensor(x).flatten().float()
+            x = torch.tensor(x).flatten().float()  # no input here...
             # ?
-            tag = torch.tensor([target], dtype=torch.long)  # no input here...
+            tag = torch.tensor([target], dtype=torch.long)
             # set all gradients to to zero
             optimizer.zero_grad()
             prediction = model(x).reshape((1, 2))
-            # activate cross entropy
+            # activate cross entropy, calculate loss
             loss = criterion(prediction, tag)
             # back propagation
             loss.backward()
             optimizer.step()
-            # update to current loss
+            # update into current loss
             running_loss += loss.item()
         # add current loss to the list
         losses.append(running_loss)
