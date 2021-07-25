@@ -49,7 +49,7 @@ def split_to_squares(image_path, length):
     for corner_x in range(max_x - length + 1):  # why not +2 ?
         for corner_y in range(max_y - length + 1):
             # append the squared matrix to the list
-            sub = rgb_array[x:x + length, y:y + length, :]
+            sub = rgb_array[corner_x:corner_x+length, corner_y:corner_y+length, :]
             slices.append(sub)
     return slices
 
@@ -97,12 +97,12 @@ if __name__ == '__main__':
     train, test = get_train_test_paths()
     # initiate a list for loss accumulation
     losses = list()
-    # ?
-    for path in train[:10]:
+    # iterate through all data pairs
+    for path in train:
         # retrieve corresponding mask files
         tag_path = get_mask_path(path)
         X = split_to_squares(path, input_image_length)
-        y = get_y(tag_path, input_image_length)
+        Y = get_y(tag_path, input_image_length)
         # assign the model
         model = Net(input_image_length, hidden_size)
         # set a loss function
@@ -111,10 +111,10 @@ if __name__ == '__main__':
         optimizer = optim.Adam(model.parameters(), lr=0.001)
         # initiate loss variable for current epoch
         running_loss = 0
-        for x, target in zip(X, y):
-            # flatten the input pixel
-            x = torch.tensor(x).flatten().float()  # no input here...
-            # ?
+        for x, target in zip(X, Y):
+            # convert input pixel to tensor and flatten
+            x = torch.flatten(torch.tensor(x)).float()
+            # convert target to tensor
             tag = torch.tensor([target], dtype=torch.long)
             # set all gradients to to zero
             optimizer.zero_grad()
