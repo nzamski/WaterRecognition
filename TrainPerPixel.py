@@ -28,9 +28,9 @@ def count_all_rgb_mask_combs(path_list):
         # iterate through the rows in the dictionary
         for row in rows:
             # ?
-            key = tuple(row[:-1])
+            rgb_index = tuple(row[:-1])
             count = row[-1]
-            example_count[key] += count
+            example_count[rgb_index] += count
     # create lists for all columns
     r = list()
     g = list()

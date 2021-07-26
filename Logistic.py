@@ -7,8 +7,8 @@ def get_train_test(train_path='rgb_train.csv', test_path='rgb_test.csv'):
     train = pd.read_csv(train_path)
     test = pd.read_csv(test_path)
     # convert mask values to absolute 0 or 1
-    train['value'] = (train['value'] > 128).astype('int64')
-    test['value'] = (test['value'] > 128).astype('int64')
+    train['value'] = (train['value'] < 128).astype('int64')
+    test['value'] = (test['value'] < 128).astype('int64')
     # return modified data
     return train, test
 
