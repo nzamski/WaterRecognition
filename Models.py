@@ -71,19 +71,17 @@ class Conv(nn.Module):
     def __init__(self, activation):
         super().__init__()
         self.activation = activation
-        self.conv1 = nn.Conv2d(1, 3, 3, 3)
-        self.conv2 = nn.Conv2d(3, 3, 3)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
+        self.conv1 = nn.Conv2d(3, 3, (3, 3))
+        self.conv2 = nn.Conv2d(3, 3, (3, 3))
+        self.fc1 = nn.Linear(3 * 7 * 7, 49)  # expected basic input size (15, 15)
+        self.fc2 = nn.Linear(49, 7)
+        self.fc3 = nn.Linear(7, 2)
 
     def forward(self, x):
-        # Max pooling over a (2, 2) window
-        x = f.max_pool2d(f.relu(self.conv1(x)), (2, 2))
-        # If the size is a square, you can specify with a single number
-        x = f.max_pool2d(f.relu(self.conv2(x)), 2)
-        x = torch.flatten(x, 1)  # flatten all dimensions except the batch dimension
-        x = f.relu(self.fc1(x))
-        x = f.relu(self.fc2(x))
+        x = f.max_pool2d(self.activation(self.conv1(x)), kernel_size=3, stride=1)
+        x = f.max_pool2d(self.activation(self.conv2(x)), kernel_size=3, stride=1)
+        x = torch.flatten(x, 1)
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
         x = self.fc3(x)
         return x
-
