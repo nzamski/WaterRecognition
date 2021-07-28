@@ -4,17 +4,6 @@ import torch.optim as optim
 import torch.nn.functional as f
 
 
-# define all activation functions, optimizers and loss functions
-ReLU = f.relu()
-LeakyReLU = f.leaky_relu()
-Sigmoid = f.sigmoid()
-Adam = optim.Adam()
-SGD = optim.SGD()
-CrossEntropy = nn.CrossEntropyLoss()
-MSE = nn.MSELoss()
-L1 = nn.L1Loss()
-
-
 class Hidden1(nn.Module):
     # define the model
     def __init__(self, length, hidden_size, activation):

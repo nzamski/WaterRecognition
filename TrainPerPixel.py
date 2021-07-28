@@ -27,7 +27,7 @@ def count_all_rgb_mask_combs(path_list):
         rows = data_frame.groupby(['r', 'g', 'b', 'value']).size().reset_index(name='counts').to_dict('split')['data']
         # iterate through the rows in the dictionary
         for row in rows:
-            # ?
+            # store every RGB combination with its prevalence
             rgb_index = tuple(row[:-1])
             count = row[-1]
             example_count[rgb_index] += count

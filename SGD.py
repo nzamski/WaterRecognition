@@ -3,7 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import SGDClassifier
 
 
 def get_train_test(train_path='rgb_train.csv', test_path='rgb_test.csv'):
@@ -27,7 +27,7 @@ def preprocessing(df):
 
 def train_model():
     # define model classifier
-    classifier = LogisticRegression(max_iter=5, warm_start=True)
+    classifier = SGDClassifier(loss='epsilon_insensitive', max_iter=1, cache_size=10000, epsilon=0.2)
     # retrieve train and test files
     train, test = get_train_test()
     squared_train = preprocessing(train)
@@ -42,7 +42,7 @@ def train_model():
         test['prediction'] = prediction
         test['correct_prediction'] = (test['value'] == test['prediction'])
         # export test data frame to CSV
-        test.to_csv('test_per_pixel_Logistic.csv', index=False)
+        test.to_csv('test_per_pixel_SGD.csv', index=False)
         # print aggregation of predictions
         results = test.groupby('correct_prediction')['count'].sum().reset_index(name='count')
         print(results)
@@ -53,11 +53,11 @@ def train_model():
     # show a plot of accuracy per iteration of the model
     df = pd.DataFrame(
         {'accuracy': accuracy_per_iter,
-         'iteration': [5*i for i in range(1, len(accuracy_per_iter)+1)]}
+         'iteration': [5 * i for i in range(1, len(accuracy_per_iter) + 1)]}
     )
     plot = sns.lineplot(data=df, x='iteration', y='accuracy')
     plot.set(ylim=(0, 1))
-    plot.figure.savefig('Logistic Regression Accuracy per Iteration Squared.png', dpi=720)
+    plot.figure.savefig('SGD Accuracy per Iteration Squared.png', dpi=720)
     plt.show()
 
 

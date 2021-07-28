@@ -1,8 +1,7 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-# import plotly.express as px
+import matplotlib.pyplot as plt
 
 
 def rgb_graph(path):
@@ -26,10 +25,6 @@ def rgb_graph(path):
 
     ax.scatter(x, y, z, cmap='coolwarm', c=agg_df['binary'], s=agg_df['count'])
     plt.show()
-
-    # present the plot
-    # fig = px.scatter_3d(agg_df, x='r', y='g', z='b', color='value')
-    # fig.show()
 
 
 if __name__ == '__main__':

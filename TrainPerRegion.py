@@ -1,13 +1,11 @@
 import os
-import torch
 import numpy as np
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as f
+from tqdm import tqdm
 from PIL import Image
 from cv2 import imread
 from pathlib import Path
 from random import shuffle
+from Models import *
 
 
 def get_train_test_paths(test_ratio: float = 0.2):
@@ -46,7 +44,7 @@ def split_to_squares(image_path, length):
     # initiate list for image slices
     slices = []
     # move along the image and save every square to the list
-    for corner_x in range(max_x - length + 1):  # why not +2 ?
+    for corner_x in range(max_x - length + 1):
         for corner_y in range(max_y - length + 1):
             # append the squared matrix to the list
             sub = rgb_array[corner_x:corner_x+length, corner_y:corner_y+length, :]
@@ -72,52 +70,38 @@ def get_y(image_path, length):  # expected odd length
     return tags
 
 
-class Net(nn.Module):
-    # define the model
-    def __init__(self, length, hidden_size):
-        super().__init__()
-        self.fc1 = nn.Linear(length * length * 3, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, hidden_size)
-        self.fc3 = nn.Linear(hidden_size, 2)
-
-    # set activation functions for the layers
-    def forward(self, x):
-        x = f.leaky_relu(self.fc1(x))
-        x = f.leaky_relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+def get_x_y(file_path, length):
+    # returns a tuple of image and its mask
+    X = split_to_squares(file_path, length)
+    mask_path = get_mask_path(file_path)
+    y = get_y(mask_path, length)
+    return X, y
 
 
-if __name__ == '__main__':
-    # length of the squared matrix
-    input_image_length = 5
-    # number of neurons in the second and third layer
-    hidden_size = 12
+def fit_model(model, model_parameters, loss_function, optimizer, preprocessor, input_image_length):
     # retrieve train and test files
     train, test = get_train_test_paths()
     # initiate a list for loss accumulation
     losses = list()
+    # assign the model
+    model = model(*model_parameters)
+    # set a loss function
+    criterion = loss_function()
+    # set an optimizer
+    optimizer = optimizer(model.parameters(), lr=0.001)
     # iterate through all data pairs
     for path in train:
-        # retrieve corresponding mask files
-        tag_path = get_mask_path(path)
-        X = split_to_squares(path, input_image_length)
-        Y = get_y(tag_path, input_image_length)
-        # assign the model
-        model = Net(input_image_length, hidden_size)
-        # set a loss function
-        criterion = nn.CrossEntropyLoss()
-        # set an optimizer
-        optimizer = optim.Adam(model.parameters(), lr=0.001)
+        X, y = preprocessor(path, input_image_length)
         # initiate loss variable for current epoch
         running_loss = 0
-        for x, target in zip(X, Y):
+        for i, (x, target) in tqdm(enumerate(zip(X, y))):
             # convert input pixel to tensor and flatten
             x = torch.flatten(torch.tensor(x)).float()
             # convert target to tensor
             tag = torch.tensor([target], dtype=torch.long)
-            # set all gradients to to zero
+            # reset all gradients
             optimizer.zero_grad()
+            # save current prediction
             prediction = model(x).reshape((1, 2))
             # activate cross entropy, calculate loss
             loss = criterion(prediction, tag)
@@ -126,6 +110,32 @@ if __name__ == '__main__':
             optimizer.step()
             # update into current loss
             running_loss += loss.item()
+            # print current loss value every 5000 iterations
+            if i % 5_000 == 0:
+                print(loss.item())
         # add current loss to the list
-        losses.append(running_loss)
+        losses.append(running_loss / len(y))
     print(losses)
+
+
+if __name__ == '__main__':
+    # define all activation functions, optimizers and loss functions
+    # ReLU = f.relu
+    # LeakyReLU = f.leaky_relu
+    # Sigmoid = f.sigmoid
+    # Adam = optim.Adam
+    # SGD = optim.SGD
+    # CrossEntropy = nn.CrossEntropyLoss()
+    # MSE = nn.MSELoss()
+    # L1 = nn.L1Loss()
+    # fit_model(Hidden1)
+
+    model = Hidden1
+    input_image_length = 5
+    hidden_layer_size = 10
+    activation = f.relu
+    model_parameters = (input_image_length, hidden_layer_size, activation)
+    optimizer = optim.Adam
+    loss_function = nn.CrossEntropyLoss
+    preprocessor = get_x_y
+    fit_model(model, model_parameters, loss_function, optimizer, preprocessor, input_image_length)
