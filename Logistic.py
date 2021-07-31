@@ -32,7 +32,7 @@ def train_model():
     train, test = get_train_test()
     squared_train = preprocessing(train)
     squared_test = preprocessing(test)
-    accuracy_per_iter = list()
+    accuracy_per_epoch = list()
     for _ in tqdm(range(10)):
         # feed the model with the train files
         classifier.fit(squared_train, train['value'].values, sample_weight=train['count'])
@@ -48,16 +48,16 @@ def train_model():
         print(results)
         # print accuracy value
         accuracy = results[results['correct_prediction'] == True]['count'].item() / results['count'].sum()
-        accuracy_per_iter.append(accuracy)
+        accuracy_per_epoch.append(accuracy)
         print(accuracy)
-    # show a plot of accuracy per iteration of the model
+    # show a plot of accuracy per epoch
     df = pd.DataFrame(
-        {'accuracy': accuracy_per_iter,
-         'iteration': [5*i for i in range(1, len(accuracy_per_iter)+1)]}
+        {'accuracy': accuracy_per_epoch,
+         'epoch': [5*i for i in range(1, len(accuracy_per_epoch)+1)]}
     )
-    plot = sns.lineplot(data=df, x='iteration', y='accuracy')
+    plot = sns.lineplot(data=df, x='epoch', y='accuracy')
     plot.set(ylim=(0, 1))
-    plot.figure.savefig('Logistic Regression Accuracy per Iteration Squared.png', dpi=720)
+    plot.figure.savefig('logistic_regression_accuracy_per_epoch_(squared).png', dpi=720)
     plt.show()
 
 
