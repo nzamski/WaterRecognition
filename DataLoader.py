@@ -4,71 +4,43 @@ from random import shuffle
 from cv2 import imread
 
 
-def split_to_squares(image_path, length):
-    # get image array from the path
-    rgb_array = load_image(image_path)
-    # store image height and width (in pixels)
-    max_x, max_y, _ = rgb_array.shape
-    # initiate list for image slices
-    slices = []
-    # move along the image and save every square to the list
-    for corner_x in range(max_x - length + 1):
-        for corner_y in range(max_y - length + 1):
-            # append the squared matrix to the list
-            sub = rgb_array[corner_x:corner_x+length, corner_y:corner_y+length, :]
-            slices.append(sub)
-    return slices
+def load_image(file_name):
+    # get image path and return as array
+    img = Image.open(file_name)
+    img.load()
+    data = np.asarray(img, dtype="int32")
+    return data
 
 
-def get_y(image_path, length):  # expected odd length
-    # get mask from path
-    binary_array = imread(image_path, 0)
-    # store mask height and width (in pixels)
-    max_x, max_y = binary_array.shape
+def get_mask_path(file_path):
+    # gets source image path, returns mask path
+    mask_path = file_path.replace('Images', 'Masks')
+    return mask_path
+
+
+def load_y(file_path):
+    mask_path = get_mask_path(file_path)
+    raw_image = imread(mask_path, 0)
     # convert pixel colors to absolute black & white
-    binary_array = (binary_array < 128).astype(int)
-    # initiate list for mask slices
-    tags = []
-    # move along the mask and save every square to the list
-    for x in range(int((length - 1) / 2), max_x - int((length - 1) / 2)):
-        for y in range(int((length - 1) / 2), max_y - int((length - 1) / 2)):
-            # append the pixel to the list
-            tag = binary_array[x, y]
-            tags.append(tag)
-    return tags
+    binary_array = (raw_image < 128).astype(int)
+    return binary_array
 
 
 class FileLoader:
     def __init__(self, path, length: int, load_both: bool = True):
         self.length = length
         self.load_both = load_both
-        self.source_image = self.load_image(path)
-        self.mask_image = self.load_y(path) if load_both else None
+        # source image variables initialization
+        self.source_image = load_image(path)
         self.source_current_x, self.source_current_y = 0, 0
-        self.mask_current_x = int((length - 1) / 2)
-        self.mask_current_y = int((length - 1) / 2) if load_both else None, None
         self.source_max_x = self.source_image.shape[0] - self.length
         self.source_max_y = self.source_image.shape[1] - self.length
-        self.mask_max_x = self.mask_image.shape[0] - int((length - 1) / 2)
-        self.mask_max_y = self.mask_image.shape[1] - int((length - 1) / 2)
-
-    def load_image(self, file_name):
-        # get image path and return as array
-        img = Image.open(file_name)
-        img.load()
-        data = np.asarray(img, dtype="int32")
-        return data
-
-    def get_mask_path(self, file_path):
-        mask_path = file_path.replace('Images', 'Masks')
-        return mask_path
-
-    def load_y(self, file_path):
-        mask_path = self.get_mask_path(file_path)
-        raw_image = imread(mask_path, 0)
-        # convert pixel colors to absolute black & white
-        binary_array = (raw_image < 128).astype(int)
-        return binary_array
+        # mask image variables initialization
+        self.mask_image = load_y(path) if load_both else None
+        self.mask_current_x = int((length - 1) / 2) if load_both else None
+        self.mask_current_y = int((length - 1) / 2) if load_both else None
+        self.mask_max_x = self.mask_image.shape[0] - int((length - 1) / 2) if load_both else None
+        self.mask_max_y = self.mask_image.shape[1] - int((length - 1) / 2) if load_both else None
 
     def advance_source_index(self):
         if self.source_current_x < self.source_max_x - self.length:
@@ -79,16 +51,39 @@ class FileLoader:
                 self.source_current_y += 1
             else:
                 return None
+        return self.source_current_x, self.source_current_y
+
+    def advance_mask_index(self):
+        if self.mask_current_x < self.mask_max_x - self.length:
+            self.mask_current_x += 1
+        else:
+            self.mask_current_x = 0
+            if self.mask_current_y < self.mask_max_y - self.length:
+                self.mask_current_y += 1
+            else:
+                return None
+        return self.mask_current_x, self.mask_current_y
 
     def get_next(self):
-        next_source_slice = self.source_image[
-                            self.source_current_x:self.source_current_x + self.length,
-                            self.source_current_y:self.source_current_y + self.length,
-                            :]
-        next_mask_slice = self.mask_image[self.mask_current_x, self.mask_current_y]
+        if self.advance_source_index() is None:
+            source_slice = None
+        else:
+            source_x, source_y = self.advance_source_index()
+            source_slice = self.source_image[
+                           source_x:source_x + self.length,
+                           source_y:source_y + self.length,
+                           :]
+        if self.load_both:
+            if self.advance_mask_index() is None:
+                mask_tag = None
+            else:
+                mask_x, mask_y = self.advance_mask_index()
+                mask_tag = self.mask_image[mask_x, mask_y]
+            return source_slice, mask_tag
+        return source_slice
 
 
-class OurDataLoader:
+class DataLoader:
     def __init__(self, path_list, batch_size: int = 4):
         self.path_list = path_list
         shuffle(self.path_list)
