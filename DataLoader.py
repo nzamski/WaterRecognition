@@ -93,9 +93,10 @@ class OurDataLoader:
         self.path_list = path_list
         shuffle(self.path_list)
         self.batch_size = batch_size
-        self.active_file_loaders = [FileLoader(path) for path in self.path_list[:batch_size]]
+        self.active_file_loaders = [FileLoader(path) for path in self.path_list[:batch_size]]  # length?
         self.file_index = batch_size
         self.max_file_index = len(self.path_list)
+
     def __next__(self):
         x_batch, y_batch = list(), list()
         for loader_index, data_loader in enumerate(self.active_file_loaders):
