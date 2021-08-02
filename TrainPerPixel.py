@@ -53,6 +53,6 @@ if __name__ == '__main__':
     # export the modified data to CSV
     train, test = get_train_test_paths()
     rgb_train = count_all_rgb_mask_combs(train)
-    rgb_train.to_csv('rgb_train.csv', index=False)
+    rgb_train.to_csv('RGB Train.csv', index=False)
     rgb_test = count_all_rgb_mask_combs(test)
-    rgb_test.to_csv('rgb_test.csv', index=False)
+    rgb_test.to_csv('RGB Test.csv', index=False)

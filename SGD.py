@@ -6,7 +6,7 @@ from tqdm import tqdm
 from sklearn.linear_model import SGDClassifier
 
 
-def get_train_test(train_path='rgb_train.csv', test_path='rgb_test.csv'):
+def get_train_test(train_path='RGB Train.csv', test_path='RGB Test.csv'):
     # read data from CSVs
     train = pd.read_csv(train_path)
     test = pd.read_csv(test_path)
@@ -57,7 +57,7 @@ def train_model():
     )
     plot = sns.lineplot(data=df, x='epoch', y='accuracy')
     plot.set(ylim=(0, 1))
-    plot.figure.savefig('sgd_accuracy_per_epoch_(squared).png', dpi=720)
+    plot.figure.savefig('SGD Accuracy Per Epoch (Squared).png', dpi=720)
     plt.show()
 
 
