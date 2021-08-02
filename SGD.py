@@ -27,7 +27,7 @@ def preprocessing(df):
 
 def train_model():
     # define model classifier
-    classifier = SGDClassifier(loss='epsilon_insensitive', max_iter=1, epsilon=0.2)  # cache_size=10000
+    classifier = SGDClassifier(loss='epsilon_insensitive', max_iter=5, epsilon=0.2)
     # retrieve train and test files
     train, test = get_train_test()
     squared_train = preprocessing(train)
