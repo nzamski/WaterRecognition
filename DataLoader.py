@@ -1,5 +1,6 @@
 import numpy as np
 from PIL import Image
+from glob import glob
 from random import shuffle
 from cv2 import imread
 
@@ -84,28 +85,63 @@ class FileLoader:
 
 
 class DataLoader:
-    def __init__(self, path_list, batch_size: int = 4):
+    def __init__(self, length, path_list, batch_size: int = 4, load_both: bool = True, return_file_name: bool = False):
+        self.length = length
         self.path_list = path_list
         shuffle(self.path_list)
+        self.current_file_index = 0
+        # expected batch size less than number of file paths
         self.batch_size = batch_size
-        self.active_file_loaders = [FileLoader(path) for path in self.path_list[:batch_size]]  # length?
+        self.load_both = load_both
+        self.return_file_name = return_file_name
+        self.active_file_loaders, self.file_names = self.setup_active_file_loaders()
         self.file_index = batch_size
         self.max_file_index = len(self.path_list)
+
+    def setup_active_file_loaders(self):
+        active_file_loaders, file_names = list(), list()
+        for _ in range(self.batch_size):
+            new_loader, file_name = self.get_next_loader()
+            active_file_loaders.append(new_loader)
+            file_names.append(file_name)
+        return active_file_loaders, file_names
+
+    def get_next_loader(self):
+        if self.current_file_index < len(self.path_list):
+            path = self.path_list[self.current_file_index]
+            new_loader = FileLoader(path, self.length, self.load_both)
+            self.current_file_index += 1
+            return new_loader, path
+        return None, None
 
     def __next__(self):
         x_batch, y_batch = list(), list()
         for loader_index, data_loader in enumerate(self.active_file_loaders):
             loaded_result = data_loader.get_next()
             if loaded_result is None:  # end of current loader
-                new_loader = self.get_next_loader()
+                new_loader, file_name = self.get_next_loader()
                 if new_loader is None:  # finished going through path list
                     del(self.active_file_loaders[loader_index])
+                    del(self.file_names[loader_index])
                     if len(self.active_file_loaders) == 0:  # end of all loaders in active file loaders
                         return None
                 else:
                     data_loader = new_loader
                     self.active_file_loaders[loader_index] = data_loader
+                    self.file_names[loader_index] = file_name
                     loaded_result = data_loader.get_next()
-            x_batch.append(loaded_result[0])
-            y_batch.append(loaded_result[1])
-        return x_batch, y_batch
+                x_batch.append(loaded_result[0])
+                if self.load_both:
+                    y_batch.append(loaded_result[1])
+        results = [x_batch]
+        if self.load_both:
+            results.append(y_batch)
+        if self.return_file_name:
+            results.append(self.file_names)
+        return results
+
+
+if __name__ == '__main__':
+    main_path = r'C:\Users\nzams\Desktop\WaterRecognition\Water Bodies Dataset\Images\*'
+    length, path_list = 3, [path for path in glob(main_path)]
+    loader = DataLoader(length, path_list)
