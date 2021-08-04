@@ -1,8 +1,9 @@
 import pandas as pd
+
 from tqdm import tqdm
 from cv2 import imread
 from collections import defaultdict
-from TrainPerRegion import get_train_test_paths, load_image, get_mask_path
+from DataLoader import get_train_test_paths, load_image, get_mask_path
 
 
 def rgb_shaper(path):
@@ -53,6 +54,6 @@ if __name__ == '__main__':
     # export the modified data to CSV
     train, test = get_train_test_paths()
     rgb_train = count_all_rgb_mask_combs(train)
-    rgb_train.to_csv('RGB Train.csv', index=False)
+    rgb_train.to_csv(index=False)
     rgb_test = count_all_rgb_mask_combs(test)
-    rgb_test.to_csv('RGB Test.csv', index=False)
+    rgb_test.to_csv(index=False)

@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+
 from tqdm import tqdm
 from sklearn.linear_model import LogisticRegression
 
@@ -42,7 +43,7 @@ def train_model():
         test['prediction'] = prediction
         test['correct_prediction'] = (test['value'] == test['prediction'])
         # export test data frame to CSV
-        test.to_csv('test_per_pixel_Logistic.csv', index=False)
+        test.to_csv('test_per_pixel_Logit.csv', index=False)
         # print aggregation of predictions
         results = test.groupby('correct_prediction')['count'].sum().reset_index(name='count')
         print(results)
@@ -57,7 +58,7 @@ def train_model():
     )
     plot = sns.lineplot(data=df, x='epoch', y='accuracy')
     plot.set(ylim=(0, 1))
-    plot.figure.savefig('Logistic Regression Accuracy Per Epoch (Squared).png', dpi=720)
+    plot.figure.savefig('Logit Accuracy Per Epoch (Squared).png', dpi=720)
     plt.show()
 
 

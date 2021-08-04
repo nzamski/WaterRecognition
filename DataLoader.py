@@ -1,8 +1,27 @@
+import os
+import random
 import numpy as np
+
 from PIL import Image
 from glob import glob
-from random import shuffle
 from cv2 import imread
+from pathlib import Path
+from random import shuffle
+
+# set a fixed seed to shuffle paths by
+random.seed(42)
+
+
+def get_train_test_paths(test_ratio: float = 0.2):
+    # extract the data from the dataset folder
+    files = [file_name for file_name in Path(os.getcwd()+os.sep+'Water Bodies Dataset'+os.sep+'Images').rglob("*.jpg")]
+    # randomize the order of the data
+    random.shuffle(files)
+    # separate test and train files
+    first_train = int(test_ratio * len(files))
+    test_path = files[:first_train]
+    train_path = files[first_train:]
+    return train_path, test_path
 
 
 def load_image(file_name):
@@ -15,8 +34,8 @@ def load_image(file_name):
 
 def get_mask_path(file_path):
     # gets source image path, returns mask path
-    mask_path = file_path.replace('Images', 'Masks')
-    return mask_path
+    file_path = str(file_path).replace('Images', 'Masks')
+    return file_path
 
 
 def load_y(file_path):
@@ -66,11 +85,11 @@ class FileLoader:
         return self.mask_current_x, self.mask_current_y
 
     def get_next(self):
-        source_coords = self.advance_source_index()
-        if source_coords is None:
+        source_indices = self.advance_source_index()
+        if source_indices is None:
             return None
         else:
-            source_x, source_y = source_coords
+            source_x, source_y = source_indices
             source_slice = self.source_image[
                            source_x:source_x + self.length,
                            source_y:source_y + self.length,
@@ -88,7 +107,7 @@ class DataLoader:
         shuffle(self.path_list)
         self.length = length
         self.current_file_index = 0
-        # expected batch size less than number of file paths
+        # expected batch size smaller than number of paths
         self.batch_size = batch_size
         self.load_both = load_both
         self.return_file_name = return_file_name
