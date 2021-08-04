@@ -145,3 +145,4 @@ if __name__ == '__main__':
     main_path = r'C:\Users\nzams\Desktop\WaterRecognition\Water Bodies Dataset\Images\*'
     length, path_list = 3, [path for path in glob(main_path)]
     loader = DataLoader(length, path_list)
+
