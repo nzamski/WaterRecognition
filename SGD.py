@@ -7,7 +7,7 @@ from tqdm import tqdm
 from sklearn.linear_model import SGDClassifier
 
 
-def get_train_test(train_path='RGB Train.csv', test_path='RGB Test.csv'):
+def get_train_test(train_path='rgb_train.csv', test_path='rgb_test.csv'):
     # read data from CSVs
     train = pd.read_csv(train_path)
     test = pd.read_csv(test_path)
@@ -33,7 +33,7 @@ def train_model():
     train, test = get_train_test()
     squared_train = preprocessing(train)
     squared_test = preprocessing(test)
-    accuracy_per_epoch = list()
+    accuracy_per_iter = list()
     for _ in tqdm(range(10)):
         # feed the model with the train files
         classifier.fit(squared_train, train['value'].values, sample_weight=train['count'])
@@ -49,16 +49,17 @@ def train_model():
         print(results)
         # print accuracy value
         accuracy = results[results['correct_prediction'] == True]['count'].item() / results['count'].sum()
-        accuracy_per_epoch.append(accuracy)
+        accuracy_per_iter.append(accuracy)
         print(accuracy)
-    # show a plot of accuracy per epoch
+    # show a plot of accuracy per iteration
     df = pd.DataFrame(
-        {'accuracy': accuracy_per_epoch,
-         'epoch': [5 * i for i in range(1, len(accuracy_per_epoch) + 1)]}
+        {'ACCURACY': accuracy_per_iter,
+         'ITERATION': [5*i for i in range(1, len(accuracy_per_iter)+1)]}
     )
-    plot = sns.lineplot(data=df, x='epoch', y='accuracy')
+    plot = sns.lineplot(data=df, x='ITERATION', y='ACCURACY')
     plot.set(ylim=(0, 1))
-    plot.figure.savefig('SGD Accuracy Per Epoch (Squared).png', dpi=720)
+    plot.set_title('Stochastic Gradient Descent')
+    plot.figure.savefig('SGD Accuracy Per Iteration (Squared).png', dpi=720)
     plt.show()
 
 
