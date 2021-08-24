@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as f
 
 
@@ -9,13 +8,18 @@ class Hidden1(nn.Module):
     def __init__(self, length, hidden_size, activation):
         super().__init__()
         self.activation = activation
+        self.length = length
+
+        self.flat = nn.Flatten()
         self.fc1 = nn.Linear(length * length * 3, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, 2)
+        self.fc2 = nn.Linear(hidden_size, length * length)
 
     # set activation functions for the layers
     def forward(self, x):
+        x = self.flat(x)
         x = self.activation(self.fc1(x))
-        x = self.fc2(x)
+        x = self.activation(self.fc2(x))
+        x = x.view(x.size(0), 1, self.length, self.length)
         return x
 
 

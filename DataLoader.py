@@ -1,22 +1,21 @@
 import os
-import random
 import numpy as np
 
 from PIL import Image
 from glob import glob
 from cv2 import imread
 from pathlib import Path
-from random import shuffle
+from random import shuffle, seed
 
 # set a fixed seed to shuffle paths by
-random.seed(42)
+seed(42)
 
 
 def get_train_test_paths(test_ratio: float = 0.2):
     # extract the data from the dataset folder
     files = [file_name for file_name in Path(os.getcwd()+os.sep+'Water Bodies Dataset'+os.sep+'Images').rglob("*.jpg")]
     # randomize the order of the data
-    random.shuffle(files)
+    shuffle(files)
     # separate test and train files
     first_train = int(test_ratio * len(files))
     test_path = files[:first_train]
@@ -180,7 +179,7 @@ class DataLoader:
 
 if __name__ == '__main__':
     main_path = r'C:\Users\nzams\Desktop\WaterRecognition\Water Bodies Dataset\Images\*'
-    path_list, length = [path for path in glob(main_path)], 3
+    path_list, length = [path for path in glob(main_path)[:5]], 3
     loader = DataLoader(path_list, length)
     for x, y in loader:
-        print(len(x), y)
+        pass

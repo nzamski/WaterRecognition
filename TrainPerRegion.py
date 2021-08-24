@@ -1,64 +1,84 @@
+import pandas as pd
+
 from Models import *
 from tqdm import tqdm
-from DataLoader import DataLoader, get_train_test_paths
+from datetime import datetime
+from WaterDataset import get_train_test_loaders
+from sklearn.metrics import accuracy_score, f1_score
 
 
-def fit_model(model, model_parameters, loss_function, optimizer, matrix_length):
+def fit_model(model, model_parameters, loss_function, optimizer):
     # retrieve train and test files
-    train, test = get_train_test_paths()
-    # initiate a list for loss accumulation
-    losses = list()
+    train_loader, test_loader = get_train_test_loaders(2)
     # assign the model
     model = model(*model_parameters)
     # set a loss function
-    criterion = loss_function()
+    criterion = loss_function
     # set an optimizer
     optimizer = optimizer(model.parameters(), lr=0.001)
-    # set a train loader
-    train_loader = DataLoader(train, matrix_length)
-    # iterate through all data pairs
-    for slice, tag in train_loader:
-        # initiate loss variable for current epoch
-        running_loss = 0
-        for i, (x, target) in tqdm(enumerate(zip(slice, tag))):
-            # convert input pixel to tensor and flatten
-            x = torch.flatten(torch.tensor(x)).float()
+    # MODEL TRAINING
+    model.train()
+    for epoch in range(10):
+        # start counting epoch duration
+        epoch_start = datetime.now()
+        # initiate epoch loss
+        epoch_loss = 0
+        # iterate through all data pairs
+        for image, mask in tqdm(train_loader):
+            # convert input pixel to tensor
+            x = torch.tensor(image).float()
             # convert target to tensor
-            tag = torch.tensor([target], dtype=torch.long)
+            tag = torch.tensor(mask, dtype=torch.long).view(-1)
             # reset all gradients
             optimizer.zero_grad()
             # save current prediction
-            prediction = model(x).reshape((1, 2))
-            # activate cross entropy, calculate loss
-            loss = criterion(prediction, tag)
+            prediction = model(x).view(-1)
+            # activate loss function, calculate loss
+            loss = criterion(prediction, tag, reduction=None)
             # back propagation
             loss.backward()
             optimizer.step()
-            # update into current loss
-            running_loss += loss.item()
-            # print current loss value every 5000 iterations
-            if i % 5_000 == 0:
-                print(loss.item())
-        # add current loss to the list
-        losses.append(running_loss / len(tag))  # ok?
-    print(losses)
+            # update epoch loss
+            epoch_loss += loss.item()
+        # stop counting epoch duration
+        epoch_end = datetime.now()
+        epoch_seconds = (epoch_end - epoch_start).total_seconds()
+        # MODEL EVALUATION
+        model.eval()
+        # collect predicted results and real results
+        predicted, real = list(), list()
+        for x, y in test_loader:
+            real += y
+            probabilities = model(x)
+            _, batch_predicted = torch.max(probabilities, 1)
+            batch_predicted = list(batch_predicted.view(-1))
+            predicted += batch_predicted
+        # calculate accuracy and f1 score
+        accuracy = accuracy_score(real, predicted)
+        f1 = f1_score(real, predicted)
+        # append results to csv file
+        df = pd.DataFrame({'Model Name': ['Hidden1'],
+                           'Iteration': [epoch],
+                           'Hyperparameters': [f'''"input_image_length": 5
+                                 "hidden_layer_size": 10
+                                 "activation": "f.relu"
+                                 "optimizer": "optim.Adam"
+                                 "loss_function": "nn.CrossEntropyLoss"'''],
+                           'Loss': [epoch_loss],
+                           'Accuracy': [accuracy],
+                           'F1': [f1],
+                           'Iteration Training Seconds': [epoch_seconds]})
+        df.to_csv('Water_Bodies_Results.csv', index=False, mode='a', header=False)
+        print(df)
 
 
 if __name__ == '__main__':
-    # define all activation functions, optimizers and loss functions
-    ReLU = f.relu
-    LeakyReLU = f.leaky_relu
-    Sigmoid = f.sigmoid
-    Adam = optim.Adam
-    SGD = optim.SGD
-    CrossEntropy = nn.CrossEntropyLoss()
-    MSE = nn.MSELoss()
-    L1 = nn.L1Loss()
-
-    # define model parameters
-    matrix_length = 5
-    hidden_layer_size = 10
-    model_parameters = (matrix_length, hidden_layer_size, ReLU)
+    loss_funcs = (nn.CrossEntropyLoss, nn.MSELoss, nn.L1Loss, nn.BCEWithLogitsLoss)
+    optimizers = (optim.Adam, optim.SGD)
+    activation_funcs = (f.relu, f.leaky_relu, f.sigmoid)
+    matrix_length = 100
+    hidden_layer_size = 50
 
     # train the model
-    fit_model(Hidden1, model_parameters, CrossEntropy, Adam, matrix_length)
+    model_parameters = (matrix_length, hidden_layer_size, activation_funcs[0])
+    fit_model(Hidden1, model_parameters, loss_funcs[1], optimizers[0])
