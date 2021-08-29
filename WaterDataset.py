@@ -39,30 +39,32 @@ class WaterDataset(Dataset):
     def __getitem__(self, index):
         img_path = self.sources[index]
         source = f.to_tensor(PIL.Image.open(img_path))
-        label = f.to_tensor(PIL.Image.open(get_mask_path(img_path)).convert('1'))
-        label = (label < 0.5).float()
+        label = f.to_tensor(PIL.Image.open(get_mask_path(img_path)).convert('L'))
 
         if self.transform_source:
             source = self.transform_source(source)
         if self.transform_both:
             source = self.transform_both(source)
             label = self.transform_both(label)
+            label = (label < 0.5).float()
+
+            assert len(label.unique()) <= 2, "threshold didn't work"
 
         return source, label
 
 
-def get_train_test_loaders(batch_size):
+def get_train_test_loaders(batch_size, length):
     train_path, test_path = get_train_test_paths()
     train_loader = DataLoader(dataset=WaterDataset(train_path,
-                                                   transform_both=torchvision.transforms.Resize((100, 100))),
+                                                   transform_both=torchvision.transforms.Resize((length, length))),
                               batch_size=batch_size,
                               shuffle=True)
-    test_loader = DataLoader(dataset=WaterDataset(test_path), batch_size=batch_size)
+    test_loader = DataLoader(dataset=WaterDataset(test_path,
+                                                  transform_both=torchvision.transforms.Resize((length, length))),
+                             batch_size=batch_size)
 
     return train_loader, test_loader
 
 
 if __name__ == '__main__':
-    train, test = get_train_test_loaders(2)
-    for source, target in train:
-        print(source.shape, target.shape)
+    pass
