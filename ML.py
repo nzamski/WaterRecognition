@@ -29,7 +29,7 @@ def train_model(classifier, fig, file, title):
     normalized_train = preprocessing(train)
     normalized_test = preprocessing(test)
     accuracy_per_iter = list()
-    for _ in tqdm(range(50)):
+    for _ in tqdm(range(500)):
         # feed the model with the train files
         classifier.fit(normalized_train, train['value'].values, sample_weight=train['count'])
         # make prediction using the test files
@@ -73,4 +73,5 @@ if __name__ == '__main__':
                    'Stochastic Gradient Descent']
 
     for classifier, fig, file, title in zip(classifiers, figure_outputs, file_outputs, plot_titles):
-        train_model(classifier, fig, file, title)
+        if title == 'Stochastic Gradient Descent':
+            train_model(classifier, fig, file, title)

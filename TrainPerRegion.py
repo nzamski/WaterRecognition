@@ -8,23 +8,23 @@ from WaterDataset import get_train_test_loaders
 from sklearn.metrics import accuracy_score, f1_score
 
 
-def fit_model(model, model_parameters, loss_function, optimizer, batch_size, image_normalized_length):
+def fit_model(model, model_parameters, loss_function, optimizer, batch_size, image_normalized_length, num_of_epochs):
     # retrieve train and test files
     train_loader, test_loader = get_train_test_loaders(batch_size, image_normalized_length)
+    # if GPU is available, prepare it for heavy calculations
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # assign the model
-    model = model(*model_parameters)
-
+    model = model(*model_parameters).to(device)
     # same importance for every pixel, same calculation for every pixel
     loss_reduction = 'sum'
-    pos_weight = torch.ones([(image_normalized_length ** 2) * batch_size])
-
+    pos_weight = torch.ones([(image_normalized_length ** 2) * batch_size]).to(device)
     # set a loss function
     criterion = loss_function(reduction=loss_reduction, pos_weight=pos_weight)
     # set an optimizer
     optimizer = optimizer(model.parameters(), lr=0.001)
     # MODEL TRAINING
     model.train()
-    for epoch in range(10):
+    for epoch in range(1, num_of_epochs + 1):
         # start counting epoch duration
         epoch_start = datetime.now()
         # initiate epoch loss
@@ -32,15 +32,15 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
         # iterate through all data pairs
         for image, mask in tqdm(train_loader):
             # convert input pixel to tensor
-            x = torch.tensor(image).float()
+            x = torch.tensor(image).float().to(device)
             # convert target to tensor
-            tag = torch.tensor(mask, dtype=torch.float).flatten()
+            tag = torch.tensor(mask, dtype=torch.float).flatten().to(device)
             # reset all gradients
             optimizer.zero_grad()
             # save current prediction
             prediction = model(x).view(-1)
             if len(prediction) != len(pos_weight):
-                pos_weight = torch.ones([len(prediction)])
+                pos_weight = torch.ones([len(prediction)]).to(device)
                 criterion = loss_function(reduction=loss_reduction, pos_weight=pos_weight)
             # activate loss function, calculate loss
             loss = criterion(prediction, tag)
@@ -57,23 +57,25 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
         # collect predicted results and real results
         predicted, real = list(), list()
         for x, y in tqdm(test_loader):
+            x = x.to(device)
             real.append(y)
             probabilities = model(x)
             batch_predicted = torch.argmax(probabilities, dim=1)
             predicted.append(batch_predicted)
         real = torch.cat(real).flatten()
-        predicted = torch.cat(predicted).flatten()
+        predicted = torch.cat(predicted).flatten().detach().cpu()
         # calculate accuracy and f1 score
         accuracy = accuracy_score(real, predicted)
         f1 = f1_score(real, predicted)
         # append results to csv file
+        hyperparameters = {'Input Image Length': image_normalized_length,
+                           'Hidden Layer Size': hidden_layer_size,
+                           'Activation Function': model_parameters[2],
+                           'Optimizer': optimizer,
+                           'Loss Function': loss_function}
         df = pd.DataFrame({'Model Name': ['Hidden1'],
                            'Iteration': [epoch],
-                           'Hyperparameters': [f'''"input_image_length": 5
-                                 "hidden_layer_size": 10
-                                 "activation": "f.relu"
-                                 "optimizer": "optim.Adam"
-                                 "loss_function": "nn.CrossEntropyLoss"'''],
+                           'Hyperparameters': str(hyperparameters),
                            'Loss': [epoch_loss],
                            'Accuracy': [accuracy],
                            'F1': [f1],
@@ -89,7 +91,8 @@ if __name__ == '__main__':
     image_normalized_length = 100
     batch_size = 2
     hidden_layer_size = 50
+    num_of_epochs = 10
 
     # train the model
     model_parameters = (image_normalized_length, hidden_layer_size, activation_funcs[0])
-    fit_model(Hidden1, model_parameters, loss_func, optimizers[0], batch_size, image_normalized_length)
+    fit_model(Hidden1, model_parameters, loss_func, optimizers[0], batch_size, image_normalized_length, num_of_epochs)

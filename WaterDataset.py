@@ -64,7 +64,3 @@ def get_train_test_loaders(batch_size, length):
                              batch_size=batch_size)
 
     return train_loader, test_loader
-
-
-if __name__ == '__main__':
-    pass
