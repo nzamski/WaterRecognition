@@ -17,9 +17,10 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
     model = model(*model_parameters).to(device)
     # same importance for every pixel, same calculation for every pixel
     loss_reduction = 'sum'
-    pos_weight = torch.ones([(image_normalized_length ** 2) * batch_size]).to(device)
+    # pos_weight = torch.ones([(image_normalized_length ** 2) * batch_size]).to(device)
     # set a loss function
-    criterion = loss_function(reduction=loss_reduction, pos_weight=pos_weight)
+    # criterion = loss_function(reduction=loss_reduction, pos_weight=pos_weight)
+    criterion = loss_function()
     # set an optimizer
     optimizer = optimizer(model.parameters(), lr=0.001)
     # MODEL TRAINING
@@ -32,16 +33,16 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
         # iterate through all data pairs
         for image, mask in tqdm(train_loader):
             # convert input pixel to tensor
-            x = torch.tensor(image).float().to(device)
+            x = image.float().to(device)
             # convert target to tensor
-            tag = torch.tensor(mask, dtype=torch.float).flatten().to(device)
+            tag = mask.flatten().long().to(device)
             # reset all gradients
             optimizer.zero_grad()
             # save current prediction
-            prediction = model(x).view(-1)
-            if len(prediction) != len(pos_weight):
-                pos_weight = torch.ones([len(prediction)]).to(device)
-                criterion = loss_function(reduction=loss_reduction, pos_weight=pos_weight)
+            prediction = model(x)
+            # if len(prediction) != len(pos_weight):
+            #     pos_weight = torch.ones([len(prediction)]).to(device)
+            #     criterion = loss_function(reduction=loss_reduction, pos_weight=pos_weight)
             # activate loss function, calculate loss
             loss = criterion(prediction, tag)
             # back propagation
@@ -70,9 +71,9 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
         # append results to csv file
         hyperparameters = {'Input Image Length': image_normalized_length,
                            'Hidden Layer Size': hidden_layer_size,
-                           'Activation Function': model_parameters[2],
-                           'Optimizer': optimizer,
-                           'Loss Function': loss_function}
+                           'Activation Function': str(model_parameters[2].__name__),
+                           'Optimizer': str(type(optimizer)),
+                           'Loss Function': str(loss_function)}
         df = pd.DataFrame({'Model Name': ['Hidden1'],
                            'Iteration': [epoch],
                            'Hyperparameters': str(hyperparameters),
@@ -85,14 +86,24 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
 
 
 if __name__ == '__main__':
-    loss_func = nn.BCEWithLogitsLoss
-    optimizers = (optim.Adam, optim.SGD)
+    # models = (Hidden1, Hidden2, Conv1, Conv2, Conv3)
+    models = [Conv1]
     activation_funcs = (f.relu, f.leaky_relu, f.sigmoid)
-    image_normalized_length = 100
-    batch_size = 2
-    hidden_layer_size = 50
-    num_of_epochs = 10
+    hidden_layer_sizes = (50, 100, 200)
+    batch_sizes = (2, 8)
+    optimizers = (optim.Adam, optim.SGD)
 
-    # train the model
-    model_parameters = (image_normalized_length, hidden_layer_size, activation_funcs[0])
-    fit_model(Hidden1, model_parameters, loss_func, optimizers[0], batch_size, image_normalized_length, num_of_epochs)
+    image_normalized_length = 100
+    num_of_epochs = 10
+    loss_func = nn.CrossEntropyLoss
+    kernel_size = 3
+
+    # train models with varying hyperparameters
+    for model in models:
+        for activation_func in activation_funcs:
+            for hidden_layer_size in hidden_layer_sizes:
+                for batch_size in batch_sizes:
+                    for optimizer in optimizers:
+                        model_parameters = (image_normalized_length, hidden_layer_size, activation_func, kernel_size)
+                        fit_model(model, model_parameters, loss_func, optimizer,
+                                  batch_size, image_normalized_length, num_of_epochs)
