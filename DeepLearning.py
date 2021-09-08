@@ -27,10 +27,10 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
     # assign the loss function
     criterion = loss_function()
     # set an optimizer
-    optimizer = optimizer(model.parameters(), lr=0.001)
-    # MODEL TRAINING
-    model.train()
+    optimizer = optimizer(model.parameters(), lr=3e-4)
     for epoch in range(1, num_of_epochs + 1):
+        # MODEL TRAINING
+        model.train()
         # start counting epoch duration
         epoch_start = datetime.now()
         # initiate epoch loss
@@ -71,19 +71,19 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
         accuracy = accuracy_score(real, predicted)
         f1 = f1_score(real, predicted)
         # append results to csv file
-        hyperparameters = {'Input Image Length': image_normalized_length,
-                           'Hidden Layer Size': hidden_layer_size,
-                           'Activation Function': str(model_parameters[2].__name__),
-                           'Optimizer': str(type(optimizer)),
-                           'Loss Function': str(loss_function)}
         df = pd.DataFrame({'Model Name': [model.__class__.__name__],
                            'Iteration': [epoch],
-                           'Hyperparameters': str(hyperparameters),
+                           'Input Image Length': [image_normalized_length],
+                           'Hidden Layer Size': [hidden_layer_size],
+                           'Batch Size': [batch_size],
+                           'Activation Function': [str(model_parameters[2].__name__)],
+                           'Optimizer': [str(type(optimizer))],
+                           'Loss Function': [str(loss_function)],
                            'Loss': [epoch_loss],
                            'Accuracy': [accuracy],
                            'F1': [f1],
                            'Iteration Training Seconds': [epoch_seconds]})
-        df.to_csv('Water_Bodies_Results.csv', index=False, mode='a', header=False)
+        df.to_csv('drive/MyDrive/Water_Bodies_Results.csv', index=False, mode='a', header=False)
         print(df)
     # save a prediction
     # with torch.no_grad():
@@ -95,6 +95,7 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
     #         file_name, _ = test_loader.dataset.samples[i]
     #         file_index = get_img_index(file_name)
     #         save_prediction(prediction, file_index, name)
+    torch.cuda.empty_cache()
 
 
 def save_prediction(prediction, index, name):
@@ -115,7 +116,7 @@ def save_prediction(prediction, index, name):
 if __name__ == '__main__':
     models = (Hidden1, Hidden2, Conv1, Conv2, Conv3)
     activation_funcs = (f.relu, f.leaky_relu, f.sigmoid)
-    hidden_layer_sizes = (50, 100, 200)
+    hidden_layer_sizes = (2_500, 10_000, 40_000)
     batch_sizes = (4, 16)
     optimizers = (optim.Adam, optim.SGD)
 
@@ -130,6 +131,6 @@ if __name__ == '__main__':
             for hidden_layer_size in hidden_layer_sizes:
                 for batch_size in batch_sizes:
                     for optimizer in optimizers:
-                        model_parameters = (image_normalized_length, hidden_layer_size, activation_func, kernel_size)
+                        model_parameters = (image_normalized_length, hidden_layer_size, activation_func)
                         fit_model(model, model_parameters, loss_func, optimizer,
                                   batch_size, image_normalized_length, num_of_epochs)

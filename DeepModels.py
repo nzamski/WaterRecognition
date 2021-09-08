@@ -11,8 +11,8 @@ class Hidden1(nn.Module):
         self.length = length
 
         self.flat = nn.Flatten()
-        self.fc1 = nn.Linear(length * length * 3, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, 2 * length * length)  # 2 for each class
+        self.fc1 = nn.Linear(length**2 * 3, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, length**2 * 2)  # 2 for each class
 
     # set activation functions for the layers
     def forward(self, x):
@@ -31,9 +31,9 @@ class Hidden2(nn.Module):
         self.length = length
 
         self.flat = nn.Flatten()
-        self.fc1 = nn.Linear(length * length * 3, hidden_size)
+        self.fc1 = nn.Linear(length**2 * 3, hidden_size)
         self.fc2 = nn.Linear(hidden_size, hidden_size)
-        self.fc3 = nn.Linear(hidden_size, 2 * length * length)  # 2 for each class
+        self.fc3 = nn.Linear(hidden_size, length**2 * 2)  # 2 for each class
 
     # set activation functions for the layers
     def forward(self, x):
@@ -55,9 +55,9 @@ class Conv1(nn.Module):
         self.hidden_size = hidden_size  # hidden_size = 3 times a perfect square
 
         self.conv1 = nn.Conv2d(3, 3, self.kernel_size, padding=int((self.kernel_size - 1) / 2))
-        self.fc1 = nn.Linear(3 * length * length, self.hidden_size)
+        self.fc1 = nn.Linear(length**2 * 3, self.hidden_size)
         self.fc2 = nn.Linear(self.hidden_size, self.hidden_size)
-        self.fc3 = nn.Linear(self.hidden_size, 2 * length * length)
+        self.fc3 = nn.Linear(self.hidden_size, length**2 * 3)
 
     def forward(self, x):
         x = self.activation(self.conv1(x))
@@ -66,7 +66,7 @@ class Conv1(nn.Module):
         x = self.activation(self.fc1(x))
         x = self.activation(self.fc2(x))
         x = self.fc3(x)
-        x = x.reshape(x.size(0) * self.length ** 2, 2)
+        x = x.reshape(x.size(0) * self.length**2, 2)
         return x
 
 
@@ -83,7 +83,7 @@ class Conv2(nn.Module):
         self.conv2 = nn.Conv2d(3, 3, self.kernel_size, padding=int((self.kernel_size - 1) / 2))
         self.fc1 = nn.Linear(3 * length * length, self.hidden_size)
         self.fc2 = nn.Linear(self.hidden_size, self.hidden_size)
-        self.fc3 = nn.Linear(self.hidden_size, 2 * length * length)
+        self.fc3 = nn.Linear(self.hidden_size, length**2 * 2)
 
     def forward(self, x):
         x = self.activation(self.conv1(x))
@@ -94,7 +94,7 @@ class Conv2(nn.Module):
         x = self.activation(self.fc1(x))
         x = self.activation(self.fc2(x))
         x = self.fc3(x)
-        x = x.reshape(x.size(0) * self.length ** 2, 2)
+        x = x.reshape(x.size(0) * self.length**2, 2)
         return x
 
 
@@ -112,7 +112,7 @@ class Conv3(nn.Module):
         self.conv3 = nn.Conv2d(3, 3, self.kernel_size, padding=int((self.kernel_size - 1) / 2))
         self.fc1 = nn.Linear(3 * length * length, self.hidden_size)
         self.fc2 = nn.Linear(self.hidden_size, self.hidden_size)
-        self.fc3 = nn.Linear(self.hidden_size, 2 * length * length)
+        self.fc3 = nn.Linear(self.hidden_size, length**2 * 2)
 
     def forward(self, x):
         x = self.activation(self.conv1(x))
