@@ -29,7 +29,7 @@ def train_model(classifier, fig, file, title):
     normalized_train = preprocessing(train)
     normalized_test = preprocessing(test)
     accuracy_per_iter = list()
-    for _ in tqdm(range(500)):
+    for _ in tqdm(range(int(150 / classifier.max_iter))):
         # feed the model with the train files
         classifier.fit(normalized_train, train['value'].values, sample_weight=train['count'])
         # make prediction using the test files
@@ -47,7 +47,7 @@ def train_model(classifier, fig, file, title):
     # show a plot of accuracy per iteration
     df = pd.DataFrame(
         {'ACCURACY': accuracy_per_iter,
-         'ITERATION': [i for i in range(1, len(accuracy_per_iter)+1)]}
+         'ITERATION': [classifier.max_iter*i for i in range(1, len(accuracy_per_iter)+1)]}
     )
     # export test data frame to CSV
     df.to_csv(file, index=False)
@@ -61,7 +61,7 @@ def train_model(classifier, fig, file, title):
 
 if __name__ == '__main__':
     classifiers = [LogisticRegression(max_iter=1, warm_start=True),
-                   SGDClassifier(loss='epsilon_insensitive', max_iter=1, epsilon=0.2)]
+                   SGDClassifier(loss='hinge', max_iter=15, warm_start=True)]
 
     figure_outputs = ['Logit Accuracy Per Iteration.png',
                       'SGD Accuracy Per Iteration.png']

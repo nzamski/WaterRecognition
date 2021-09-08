@@ -3,7 +3,7 @@ import pandas as pd
 from tqdm import tqdm
 from cv2 import imread
 from collections import defaultdict
-from OldDataLoader import get_train_test_paths, load_image, get_mask_path
+from BatchLoader import get_train_test_paths, load_image, get_mask_path
 
 
 def rgb_shaper(path):
