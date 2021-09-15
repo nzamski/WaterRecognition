@@ -58,18 +58,26 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
         # MODEL EVALUATION
         model.eval()
         # collect predicted results and real results
-        predicted, real = list(), list()
+        total_predicted_positive, total_true_positive, total_false_negative, total_true_prediction, total_false_prediction = 0, 0, 0, 0, 0
         for x, y in tqdm(test_loader):
             x = x.to(device)
-            real.append(y)
             probabilities = model(x)
-            batch_predicted = torch.argmax(probabilities, dim=1)
-            predicted.append(batch_predicted)
-        real = torch.cat(real).reshape(-1)
-        predicted = torch.cat(predicted).reshape(-1).detach().cpu()
+            prediction = torch.argmax(probabilities, dim=1)
+
+            predicted_positive = (prediction == 1).sum().item()
+            true_positive = ((prediction == 1) & (tag == 1)).sum().item()
+            false_negative = ((prediction == 0) & (tag == 1)).sum().item()
+
+            total_predicted_positive += predicted_positive
+            total_true_positive += true_positive
+            total_false_negative += false_negative
+            total_true_prediction += (prediction == tag).sum().item()
+            total_false_prediction += (prediction != tag).sum().item()
         # calculate accuracy and f1 score
-        accuracy = accuracy_score(real, predicted)
-        f1 = f1_score(real, predicted)
+        recall = total_true_positive / (total_true_positive + total_false_negative)
+        precision = total_true_positive / total_predicted_positive
+        f1 = (2 * precision * recall) / (precision + recall)
+        accuracy = total_true_prediction / (total_true_prediction + total_false_prediction)
         # append results to csv file
         df = pd.DataFrame({'Model Name': [model.__class__.__name__],
                            'Iteration': [epoch],
@@ -80,8 +88,10 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
                            'Optimizer': [str(type(optimizer))],
                            'Loss Function': [str(loss_function)],
                            'Loss': [epoch_loss],
-                           'Accuracy': [accuracy],
+                           'Recall': [recall],
+                           'Precision': [precision],
                            'F1': [f1],
+                           'Accuracy': [accuracy],
                            'Iteration Training Seconds': [epoch_seconds]})
         df.to_csv('drive/MyDrive/Water_Bodies_Results.csv', index=False, mode='a', header=False)
         print(df)
