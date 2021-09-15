@@ -11,6 +11,32 @@ from torchvision.transforms import Resize
 from DataLoader import get_train_test_loaders
 
 
+def save_prediction(prediction, index, name):
+    # convert two-valued pixels to single-max-value
+    prediction = torch.argmax(prediction, dim=1)
+    # reshape the flattened prediction to a matrix
+    prediction = prediction.reshape(100, 100)
+    # get original size
+    source_path = f'{os.getcwd()}{os.sep}Water Bodies Dataset{os.sep}Images{os.sep}water_body_{index}.jpg'
+    width, height = cv2.imread(source_path).shape
+    # resize prediction to original source size
+    prediction = Resize(prediction, size=(width, height))
+    prediction_path = f'{os.getcwd()}{os.sep}Deep Images{os.sep}{name}_{index}.jpg'
+    # save the prediction
+    save_image(prediction, prediction_path)
+
+
+def get_n_params(model):
+    """https://discuss.pytorch.org/t/how-do-i-check-the-number-of-parameters-of-a-model/4325/6"""
+    pp = 0
+    for p in list(model.parameters()):
+        nn = 1
+        for s in list(p.size()):
+            nn = nn * s
+        pp += nn
+    return pp
+
+
 def get_img_index(path):
     index = str(path).split('_')[-1].split('.')[0]
     return index
@@ -51,7 +77,6 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
             optimizer.step()
             # update epoch loss
             epoch_loss += loss.item()
-            break
         # stop counting epoch duration
         epoch_end = datetime.now()
         epoch_seconds = (epoch_end - epoch_start).total_seconds()
@@ -98,7 +123,8 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
                            'Iteration Training Seconds': [epoch_seconds]})
         df.to_csv('Water_Bodies_Results.csv', index=False, mode='a', header=False)
         print(df)
-    # save a prediction
+
+    ### SAVE A PREDICTION ###
     # with torch.no_grad():
     #     for i, image, mask in enumerate(test_loader):
     #         name = ''
@@ -108,53 +134,27 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
     #         file_name, _ = test_loader.dataset.samples[i]
     #         file_index = get_img_index(file_name)
     #         save_prediction(prediction, file_index, name)
+
+    # clean memory of current model on exit
     torch.cuda.empty_cache()
 
 
-def save_prediction(prediction, index, name):
-    # convert two-valued pixels to single-max-value
-    prediction = torch.argmax(prediction, dim=1)
-    # reshape the flattened prediction to a matrix
-    prediction = prediction.reshape(100, 100)
-    # get original size
-    source_path = f'{os.getcwd()}{os.sep}Water Bodies Dataset{os.sep}Images{os.sep}water_body_{index}.jpg'
-    width, height = cv2.imread(source_path).shape
-    # resize prediction to original source size
-    prediction = Resize(prediction, size=(width, height))
-    prediction_path = f'{os.getcwd()}{os.sep}Deep Images{os.sep}{name}_{index}.jpg'
-    # save the prediction
-    save_image(prediction, prediction_path)
-
-
-def get_n_params(model):
-    """https://discuss.pytorch.org/t/how-do-i-check-the-number-of-parameters-of-a-model/4325/6"""
-    pp = 0
-    for p in list(model.parameters()):
-        nn = 1
-        for s in list(p.size()):
-            nn = nn * s
-        pp += nn
-    return pp
-
-
 if __name__ == '__main__':
-    models = (Conv2,)
+    models = (Conv1,)
     activation_funcs = (f.relu, f.leaky_relu)
     hidden_layer_sizes = (4000, 3000, 2000)
-    batch_sizes = (32,)
-    optimizers = (optim.Adam,)
 
-    image_normalized_length = 100
-    num_of_epochs = 10
+    optimizer = optim.Adam
     loss_func = nn.CrossEntropyLoss
+    image_normalized_length = 100
+    batch_size = 16
+    num_of_epochs = 10
     kernel_size = 3
 
     # train models with varying hyperparameters
     for model in models:
         for activation_func in activation_funcs:
             for hidden_layer_size in hidden_layer_sizes:
-                for batch_size in batch_sizes:
-                    for optimizer in optimizers:
-                        model_parameters = (image_normalized_length, hidden_layer_size, activation_func, kernel_size)
-                        fit_model(model, model_parameters, loss_func, optimizer,
-                                  batch_size, image_normalized_length, num_of_epochs)
+                model_parameters = (image_normalized_length, hidden_layer_size, activation_func, kernel_size)
+                fit_model(model, model_parameters, loss_func, optimizer,
+                          batch_size, image_normalized_length, num_of_epochs)
