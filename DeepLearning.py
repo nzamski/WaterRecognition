@@ -9,7 +9,6 @@ from datetime import datetime
 from torchvision.utils import save_image
 from torchvision.transforms import Resize
 from DataLoader import get_train_test_loaders
-from sklearn.metrics import accuracy_score, f1_score
 
 
 def get_img_index(path):
@@ -52,27 +51,31 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
             optimizer.step()
             # update epoch loss
             epoch_loss += loss.item()
+            break
         # stop counting epoch duration
         epoch_end = datetime.now()
         epoch_seconds = (epoch_end - epoch_start).total_seconds()
         # MODEL EVALUATION
         model.eval()
         # collect predicted results and real results
-        total_predicted_positive, total_true_positive, total_false_negative, total_true_prediction, total_false_prediction = 0, 0, 0, 0, 0
-        for x, y in tqdm(test_loader):
-            x = x.to(device)
-            probabilities = model(x)
-            prediction = torch.argmax(probabilities, dim=1)
+        total_predicted_positive, total_true_positive, total_false_negative, \
+        total_true_prediction, total_false_prediction = 0, 0, 0, 0, 0
+        with torch.no_grad():
+            for x, y in tqdm(test_loader):
+                x = x.to(device)
+                y = y.flatten().to(device)
+                probabilities = model(x)
+                prediction = torch.argmax(probabilities, dim=1)
 
-            predicted_positive = (prediction == 1).sum().item()
-            true_positive = ((prediction == 1) & (tag == 1)).sum().item()
-            false_negative = ((prediction == 0) & (tag == 1)).sum().item()
+                predicted_positive = (prediction == 1).sum().item()
+                true_positive = ((prediction == 1) & (y == 1)).sum().item()
+                false_negative = ((prediction == 0) & (y == 1)).sum().item()
 
-            total_predicted_positive += predicted_positive
-            total_true_positive += true_positive
-            total_false_negative += false_negative
-            total_true_prediction += (prediction == tag).sum().item()
-            total_false_prediction += (prediction != tag).sum().item()
+                total_predicted_positive += predicted_positive
+                total_true_positive += true_positive
+                total_false_negative += false_negative
+                total_true_prediction += (prediction == y).sum().item()
+                total_false_prediction += (prediction != y).sum().item()
         # calculate accuracy and f1 score
         recall = total_true_positive / (total_true_positive + total_false_negative)
         precision = total_true_positive / total_predicted_positive
@@ -93,7 +96,7 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
                            'F1': [f1],
                            'Accuracy': [accuracy],
                            'Iteration Training Seconds': [epoch_seconds]})
-        df.to_csv('drive/MyDrive/Water_Bodies_Results.csv', index=False, mode='a', header=False)
+        df.to_csv('Water_Bodies_Results.csv', index=False, mode='a', header=False)
         print(df)
     # save a prediction
     # with torch.no_grad():
@@ -123,12 +126,23 @@ def save_prediction(prediction, index, name):
     save_image(prediction, prediction_path)
 
 
+def get_n_params(model):
+    """https://discuss.pytorch.org/t/how-do-i-check-the-number-of-parameters-of-a-model/4325/6"""
+    pp = 0
+    for p in list(model.parameters()):
+        nn = 1
+        for s in list(p.size()):
+            nn = nn * s
+        pp += nn
+    return pp
+
+
 if __name__ == '__main__':
-    models = (Hidden1, Hidden2, Conv1, Conv2, Conv3)
-    activation_funcs = (f.relu, f.leaky_relu, f.sigmoid)
-    hidden_layer_sizes = (2_500, 10_000, 40_000)
-    batch_sizes = (4, 16)
-    optimizers = (optim.Adam, optim.SGD)
+    models = (Conv2,)
+    activation_funcs = (f.relu, f.leaky_relu)
+    hidden_layer_sizes = (4000, 3000, 2000)
+    batch_sizes = (32,)
+    optimizers = (optim.Adam,)
 
     image_normalized_length = 100
     num_of_epochs = 10
@@ -141,6 +155,6 @@ if __name__ == '__main__':
             for hidden_layer_size in hidden_layer_sizes:
                 for batch_size in batch_sizes:
                     for optimizer in optimizers:
-                        model_parameters = (image_normalized_length, hidden_layer_size, activation_func)
+                        model_parameters = (image_normalized_length, hidden_layer_size, activation_func, kernel_size)
                         fit_model(model, model_parameters, loss_func, optimizer,
                                   batch_size, image_normalized_length, num_of_epochs)

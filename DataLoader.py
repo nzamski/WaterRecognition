@@ -58,9 +58,13 @@ def get_train_test_loaders(batch_size, length):
     train_loader = DataLoader(dataset=WaterDataset(train_path,
                                                    transform_both=torchvision.transforms.Resize((length, length))),
                               batch_size=batch_size,
+                              pin_memory=True,
+                              num_workers=3,
                               shuffle=True)
     test_loader = DataLoader(dataset=WaterDataset(test_path,
                                                   transform_both=torchvision.transforms.Resize((length, length))),
-                             batch_size=batch_size)
+                             batch_size=batch_size,
+                             pin_memory=True,
+                             num_workers=3)
 
     return train_loader, test_loader
