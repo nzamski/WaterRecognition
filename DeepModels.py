@@ -4,7 +4,6 @@ import torch.nn.functional as f
 
 
 class Hidden1(nn.Module):
-    # define the model
     def __init__(self, length, hidden_size, activation):
         super().__init__()
         self.activation = activation
@@ -14,7 +13,6 @@ class Hidden1(nn.Module):
         self.fc1 = nn.Linear(length**2 * 3, hidden_size)
         self.fc2 = nn.Linear(hidden_size, length**2 * 2)  # 2 for each class
 
-    # set activation functions for the layers
     def forward(self, x):
         x = self.flat(x)
         x = self.activation(self.fc1(x))
@@ -24,7 +22,6 @@ class Hidden1(nn.Module):
 
 
 class Hidden2(nn.Module):
-    # define the model
     def __init__(self, length, hidden_size, activation):
         super().__init__()
         self.activation = activation
@@ -35,7 +32,6 @@ class Hidden2(nn.Module):
         self.fc2 = nn.Linear(hidden_size, hidden_size)
         self.fc3 = nn.Linear(hidden_size, length**2 * 2)  # 2 for each class
 
-    # set activation functions for the layers
     def forward(self, x):
         x = self.flat(x)
         x = self.activation(self.fc1(x))
@@ -46,7 +42,6 @@ class Hidden2(nn.Module):
 
 
 class Conv1(nn.Module):
-    # define the model
     def __init__(self, length, hidden_size, activation, kernel_size: int = 3):
         super().__init__()
         self.activation = activation
@@ -71,7 +66,6 @@ class Conv1(nn.Module):
 
 
 class Conv2(nn.Module):
-    # define the model
     def __init__(self, length, hidden_size, activation, kernel_size: int = 3):
         super().__init__()
         self.activation = activation
@@ -99,7 +93,6 @@ class Conv2(nn.Module):
 
 
 class Conv3(nn.Module):
-    # define the model
     def __init__(self, length, hidden_size, activation, kernel_size: int = 3):
         super().__init__()
         self.activation = activation

@@ -5,7 +5,7 @@ import torchvision
 
 from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
-from torchvision.transforms import functional as f
+from torchvision.transforms import functional
 
 
 def get_train_test_paths(test_ratio: float = 0.2):
@@ -38,8 +38,8 @@ class WaterDataset(Dataset):
 
     def __getitem__(self, index):
         img_path = self.sources[index]
-        source = f.to_tensor(PIL.Image.open(img_path))
-        label = f.to_tensor(PIL.Image.open(get_mask_path(img_path)).convert('L'))
+        source = functional.to_tensor(PIL.Image.open(img_path))
+        label = functional.to_tensor(PIL.Image.open(get_mask_path(img_path)).convert('L'))
 
         if self.transform_source:
             source = self.transform_source(source)

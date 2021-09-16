@@ -38,51 +38,34 @@ def get_n_params(model):
 
 
 def get_img_index(path):
+    # get ordinal image number from image path
     index = str(path).split('_')[-1].split('.')[0]
     return index
 
 
 def fit_model(model, model_parameters, loss_function, optimizer, batch_size, image_normalized_length, num_of_epochs):
-    # retrieve train and test files
     train_loader, test_loader = get_train_test_loaders(batch_size, image_normalized_length)
     # if GPU is available, prepare it for heavy calculations
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # assign the model
     model = model(*model_parameters).to(device)
-    # assign the loss function
     criterion = loss_function()
-    # set an optimizer
     optimizer = optimizer(model.parameters(), lr=3e-4)
     for epoch in range(1, num_of_epochs + 1):
-        # MODEL TRAINING
         model.train()
-        # start counting epoch duration
         epoch_start = datetime.now()
-        # initiate epoch loss
         epoch_loss = 0
-        # iterate through all data pairs
         for image, mask in tqdm(train_loader):
-            # convert input pixel to tensor
             x = image.float().to(device)
-            # convert target to tensor
             tag = mask.flatten().long().to(device)
-            # reset all gradients
             optimizer.zero_grad()
-            # save current prediction
             prediction = model(x)
-            # activate loss function, calculate loss
             loss = criterion(prediction, tag)
-            # back propagation
             loss.backward()
             optimizer.step()
-            # update epoch loss
             epoch_loss += loss.item()
-        # stop counting epoch duration
         epoch_end = datetime.now()
         epoch_seconds = (epoch_end - epoch_start).total_seconds()
-        # MODEL EVALUATION
         model.eval()
-        # collect predicted results and real results
         total_predicted_positive, total_true_positive, total_false_negative, \
         total_true_prediction, total_false_prediction = 0, 0, 0, 0, 0
         with torch.no_grad():
@@ -101,7 +84,6 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
                 total_false_negative += false_negative
                 total_true_prediction += (prediction == y).sum().item()
                 total_false_prediction += (prediction != y).sum().item()
-        # calculate accuracy and f1 score
         recall = total_true_positive / (total_true_positive + total_false_negative)
         precision = total_true_positive / total_predicted_positive
         f1 = (2 * precision * recall) / (precision + recall)
@@ -140,7 +122,7 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
 
 
 if __name__ == '__main__':
-    models = (Conv1,)
+    models = (Hidden1, Hidden2, Conv1, Conv2, Conv3)
     activation_funcs = (f.relu, f.leaky_relu)
     hidden_layer_sizes = (4000, 3000, 2000)
 
@@ -155,6 +137,8 @@ if __name__ == '__main__':
     for model in models:
         for activation_func in activation_funcs:
             for hidden_layer_size in hidden_layer_sizes:
-                model_parameters = (image_normalized_length, hidden_layer_size, activation_func, kernel_size)
+                if 'Conv' in model.__name__:
+                    model_parameters = (image_normalized_length, hidden_layer_size, activation_func, kernel_size)
+                model_parameters = (image_normalized_length, hidden_layer_size, activation_func)
                 fit_model(model, model_parameters, loss_func, optimizer,
                           batch_size, image_normalized_length, num_of_epochs)
