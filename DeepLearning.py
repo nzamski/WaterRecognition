@@ -88,6 +88,7 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
         precision = total_true_positive / total_predicted_positive
         f1 = (2 * precision * recall) / (precision + recall)
         accuracy = total_true_prediction / (total_true_prediction + total_false_prediction)
+
         # append results to csv file
         df = pd.DataFrame({'Model Name': [model.__class__.__name__],
                            'Iteration': [epoch],
@@ -134,11 +135,13 @@ if __name__ == '__main__':
     kernel_size = 3
 
     # train models with varying hyperparameters
+    params = dict()
     for model in models:
         for activation_func in activation_funcs:
             for hidden_layer_size in hidden_layer_sizes:
                 if 'Conv' in model.__name__:
                     model_parameters = (image_normalized_length, hidden_layer_size, activation_func, kernel_size)
                 model_parameters = (image_normalized_length, hidden_layer_size, activation_func)
-                fit_model(model, model_parameters, loss_func, optimizer,
-                          batch_size, image_normalized_length, num_of_epochs)
+                # fit_model(model, model_parameters, loss_func, optimizer,
+                #           batch_size, image_normalized_length, num_of_epochs)
+                params = get_n_params(model(**model_parameters))

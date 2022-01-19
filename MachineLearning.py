@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -29,6 +30,16 @@ def train_model(classifier, fig, file, title):
     normalized_train = preprocessing(train)
     normalized_test = preprocessing(test)
     accuracy_per_iter = list()
+    # pre-training
+    classifier.fit(np.random.rand(2, 3), np.array([0, 1]))
+    prediction = classifier.predict(normalized_test)
+    test['prediction'] = prediction
+    test['correct_prediction'] = (test['value'] == test['prediction'])
+    results = test.groupby('correct_prediction')['count'].sum().reset_index(name='count')
+    print(results)
+    accuracy = results[results['correct_prediction'] == True]['count'].item() / results['count'].sum()
+    accuracy_per_iter.append(accuracy)
+    print(accuracy)
     for _ in tqdm(range(int(150 / classifier.max_iter))):
         # feed the model with the train files
         classifier.fit(normalized_train, train['value'].values, sample_weight=train['count'])
@@ -44,24 +55,30 @@ def train_model(classifier, fig, file, title):
         accuracy = results[results['correct_prediction'] == True]['count'].item() / results['count'].sum()
         accuracy_per_iter.append(accuracy)
         print(accuracy)
+
+    # original distribution in dataset
+    baseline = 0.676613
+
     # show a plot of accuracy per iteration
     df = pd.DataFrame(
         {'ACCURACY': accuracy_per_iter,
-         'ITERATION': [classifier.max_iter*i for i in range(1, len(accuracy_per_iter)+1)]}
+         'ITERATION': [classifier.max_iter*i for i in range(1, len(accuracy_per_iter)+1)],
+         'MODEL TYPE': [title for _ in range(1, len(accuracy_per_iter) + 1)]}
     )
     # export test data frame to CSV
-    df.to_csv(file, index=False)
+    baseline_df = pd.DataFrame(
+        {'ACCURACY': [baseline for _ in range(len(accuracy_per_iter))],
+         'ITERATION': [classifier.max_iter * i for i in range(1, len(accuracy_per_iter) + 1)],
+         'MODEL TYPE': ['Baseline' for _ in range(len(accuracy_per_iter))]}
+    )
 
-    plot = sns.lineplot(data=df, x='ITERATION', y='ACCURACY')
-    plot.set(ylim=(0, 1))
-    plot.set_title(title)
-    plot.figure.savefig(fig, dpi=720)
-    plt.show()
+    df = pd.concat([df, baseline_df])
+    df.to_csv(file, index=False)
 
 
 if __name__ == '__main__':
     classifiers = [LogisticRegression(max_iter=1, warm_start=True),
-                   SGDClassifier(loss='hinge', max_iter=15, warm_start=True)]
+                   SGDClassifier(loss='hinge', max_iter=1, warm_start=True, alpha=2e10)]
 
     figure_outputs = ['Logit Accuracy Per Iteration.png',
                       'SGD Accuracy Per Iteration.png']
@@ -73,5 +90,4 @@ if __name__ == '__main__':
                    'Stochastic Gradient Descent']
 
     for classifier, fig, file, title in zip(classifiers, figure_outputs, file_outputs, plot_titles):
-        if title == 'Stochastic Gradient Descent':
-            train_model(classifier, fig, file, title)
+        train_model(classifier, fig, file, title)

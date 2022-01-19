@@ -1,9 +1,42 @@
+import os
+import numpy as np
 import pandas as pd
-
 from tqdm import tqdm
-from cv2 import imread
 from collections import defaultdict
-from BatchLoader import get_train_test_paths, load_image, get_mask_path
+
+from PIL import Image
+from cv2 import imread
+from pathlib import Path
+from random import shuffle, seed
+
+# set a fixed seed to shuffle paths by
+seed(42)
+
+
+def get_train_test_paths(test_ratio: float = 0.2):
+    # extract the data from the dataset folder
+    files = [file_name for file_name in Path(os.getcwd()+os.sep+'Water Bodies Dataset'+os.sep+'Images').rglob("*.jpg")]
+    # randomize the order of the data
+    shuffle(files)
+    # separate test and train files
+    first_train = int(test_ratio * len(files))
+    test_path = files[:first_train]
+    train_path = files[first_train:]
+    return train_path, test_path
+
+
+def load_image(file_name):
+    # get image path and return as array
+    img = Image.open(file_name)
+    img.load()
+    data = np.asarray(img, dtype="int32")
+    return data
+
+
+def get_mask_path(file_path):
+    # gets source image path, returns mask path
+    file_path = str(file_path).replace('Images', 'Masks')
+    return file_path
 
 
 def rgb_shaper(path):
