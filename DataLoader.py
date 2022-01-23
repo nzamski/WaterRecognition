@@ -65,6 +65,7 @@ def get_train_test_loaders(batch_size, length):
                                                   transform_both=torchvision.transforms.Resize((length, length))),
                              batch_size=batch_size,
                              pin_memory=True,
-                             num_workers=3)
+                             num_workers=3,
+                             shuffle=False)
 
     return train_loader, test_loader

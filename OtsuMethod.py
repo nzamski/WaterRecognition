@@ -1,12 +1,9 @@
 import os
-import PIL
 import cv2
-import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
 from pathlib import Path
-from matplotlib import pyplot as plt
 
 
 def get_source_paths():
@@ -29,46 +26,49 @@ def get_img_index(path):
     return index
 
 
-def otsu_predict(source_path, coeff=1):
+def otsu_predict(source_path):
     source_img = cv2.imread(str(source_path), 0)
     mask_img = get_mask(source_path)
-    ret, thresh = cv2.threshold(source_img, 0, 255, int((cv2.THRESH_BINARY + cv2.THRESH_OTSU)*coeff))
-    binary = (source_img > thresh)
+    ret, thresh = cv2.threshold(source_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    # apply a Gaussian blur after thresholding
+    thresh = cv2.GaussianBlur(thresh, (5, 5), 0)
 
-    # switch thresholding if classes are inverted
-    colored_img = cv2.imread(str(source_path))
-    blue = colored_img[:, :, 2]
-    binary = binary if np.mean(blue[binary]) > np.mean(~blue[binary]) else ~binary
-    binary = binary.astype(int)*255
-
-    correct = np.sum(binary == mask_img)
     size = source_img.shape[0] * source_img.shape[1]
+    # # if true positive rate equals zero
+    if ((thresh == 255) & (mask_img == 255)).sum().item() == 0:
+        return thresh, size, 1, ret
 
-    return binary, correct, size, coeff
+    predicted_positive = (thresh == 255).sum().item()
+    true_positive = ((thresh == 255) & (mask_img == 255)).sum().item()
+    false_negative = ((thresh == 0) & (mask_img == 255)).sum().item()
+
+    recall = true_positive / (true_positive + false_negative)
+    precision = true_positive / predicted_positive
+
+    f1 = (2 * precision * recall) / (precision + recall)
+
+    return thresh, size, f1, ret
 
 
 def main():
-    correct_pixels, image_size, indices, coeffs = list(), list(), list(), list()
+    scores, image_size, indices, thresholds = list(), list(), list(), list()
     source_paths = get_source_paths()
-    for i in [9, 10, 12]:
-        for source_path in tqdm(source_paths):
-            segmented, correct, size, coeff = otsu_predict(source_path, i/10)
-            correct_pixels.append(correct)
-            image_size.append(size)
-            index = get_img_index(source_path)
-            indices.append(index)
-            coeffs.append(coeff)
-            cv2.imwrite(f'Otsu Images{os.sep}-{coeff}-{index}.png', segmented)
-    df = pd.DataFrame(data={'correct_pixels': correct_pixels, 'image_size': image_size,
-                            'index': indices, 'coeff': coeffs})
-    df['accuracy'] = df['correct_pixels'] / df['image_size']
+    for source_path in tqdm(source_paths):
+        segmented, size, f1, ret = otsu_predict(source_path)
+        scores.append(f1)
+        thresholds.append(ret)
+        image_size.append(size)
+        index = get_img_index(source_path)
+        indices.append(index)
+        cv2.imwrite(f'Otsu Images{os.sep}{index}.jpg', segmented)
+    df = pd.DataFrame(data={'F1': scores, 'Threshold': thresholds, 'Image Size': image_size, 'Index': indices})
     df.to_csv('Otsu_Results.csv', index=False)
 
 
 if __name__ == '__main__':
     main()
     # source = 'D:/Noam/Desktop/img.jpg'
-    # segmented, correct, size, coeff = otsu_predict(source)
-    # print(correct / size)
+    # segmented, size, f1 = otsu_predict(source)
+    # print(f1)
     # image = PIL.Image.fromarray(segmented)
     # image.show()

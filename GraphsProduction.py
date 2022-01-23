@@ -1,53 +1,47 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import os
 
 
-def plot_performance(title):
+def plot_performance():
     otsu = pd.read_csv('Otsu_Results.csv')
     logit = pd.read_csv('test_per_pixel_Logit.csv')
-    sgd = pd.read_csv('test_per_pixel_SGD.csv')
     deep = pd.read_csv('Water_Bodies_Results.csv')
 
-    # otsu = otsu.groupby('coeff').sum(['correct_pixels', 'image_size']).reset_index()
-    # otsu['accuracy'] = otsu['correct_pixels'] / otsu['image_size']
-    # otsu['name'] = 'Otsu'
-    # otsu.sort_values('accuracy', ascending=False, inplace=True)
-    # otsu = otsu.head(1)
-    # otsu.columns = ['name', 'Accuracy']
-    #
-    # logit['name'] = 'Logit'
-    # logit.sort_values('ACCURACY', ascending=False, inplace=True)
-    # logit = logit.head(1)
-    # logit.columns = ['name', 'Accuracy']
-    #
-    # sgd['name'] = 'SGD'
-    # sgd.sort_values('ACCURACY', ascending=False, inplace=True)
-    # sgd = sgd.head(1)
-    # sgd = sgd[['name', 'ACCURACY']]
-    # sgd.columns = ['name', 'Accuracy']
-    #
-    # deep['name'] = 'Deep'
-    # deep.sort_values('Accuracy', ascending=False, inplace=True)
-    # deep = deep.head(1)
-    # deep = deep[['name', 'Accuracy']]
+    # according to the original distribution in dataset
+    baseline = 0.61992
+    baseline_f1 = 0.76537
 
-    # plot = sns.boxplot(data=df, x='Model Name', y='Iteration Training Seconds', hue='Activation Function')
-    # fig = plot.get_figure()
-    # plot.set(ylim=(0, 1))
-    # plot.set_title(title)
-    # plt.savefig(title+'.png', dpi=720)
-    # plt.show()
+    # deep.loc[deep['Activation Function'] == 'leaky_relu', 'Activation Function'] = 'Leaky ReLU'
+    # deep.loc[deep['Activation Function'] == 'relu', 'Activation Function'] = 'ReLU'
 
-    plot = sns.lineplot(data=sgd, x='ITERATION', y='ACCURACY')
-    plot.set(ylim=(0, 1))
-    plot.set_title(title)
-    fig = plot.get_figure()
-    fig.savefig(title)
+    deep = deep[deep['Model Name'] == 'Conv1']
+    deep = deep[deep['Hidden Layer Size'] == 3000]
+    deep = deep[deep['Activation Function'] == 'leaky_relu']
+    deep = deep[['Iteration', 'F1', 'Model Name']]
+
+    otsu = pd.DataFrame({'Iteration': [i + 1 for i in range(0, 10)],
+                         'F1': [otsu['F1'].median() for _ in range(0, 10)]})
+
+    otsu['Model Name'] = "Otsu's Method (median)"
+    logit['Model Name'] = 'Logistic Regression'
+    deep['Model Name'] = 'Conv1 (Leaky ReLU, 3000²)'
+    df = pd.concat([otsu, logit, deep]).set_index([[i for i in range(0, 30)]])
+
+    plot = sns.lineplot(data=df, x='Iteration', y='F1', hue='Model Name')
+    plot.axhline(baseline_f1, ls='--', c='r', label='Baseline')
+    plot.set(ylim=(0.7, 1))
+    plot.set_title('All 3 methods: F1-score for best models')
+    plt.savefig('comparison.png', dpi=720)
     plt.show()
+
+    # plot = sns.boxplot(data=deep, x='Model Name', y='F1', hue='Activation Function')
+    # plot.axhline(baseline_f1, ls='--', c='r', label='Baseline')
+    # # plot.set(ylim=(0, 1))
+    # plot.set_title('Deep Learning: F1-score for different activation functions')
+    # plt.savefig('deep1.png', dpi=720)
+    # plt.show()
 
 
 if __name__ == '__main__':
-    os.chdir('D:/Noam/Desktop/WaterRecognition')
-    plot_performance('SGD Accuracy per iteration')
+    plot_performance()

@@ -1,5 +1,9 @@
 /.idea/
 /Water Bodies Dataset/
+/Otsu Images/
 
-*.csv
 *.png
+*.jpg
+
+rgb_test.csv
+rgb_train.csv
