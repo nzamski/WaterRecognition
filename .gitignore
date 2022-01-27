@@ -4,6 +4,7 @@
 
 *.png
 *.jpg
+*.pt
 
 rgb_test.csv
 rgb_train.csv

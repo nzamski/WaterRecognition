@@ -1,5 +1,6 @@
 import os
 import cv2
+import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
@@ -30,11 +31,15 @@ def otsu_predict(source_path):
     source_img = cv2.imread(str(source_path), 0)
     mask_img = get_mask(source_path)
     ret, thresh = cv2.threshold(source_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    # apply a Gaussian blur after thresholding
-    thresh = cv2.GaussianBlur(thresh, (5, 5), 0)
 
     size = source_img.shape[0] * source_img.shape[1]
-    # # if true positive rate equals zero
+    # switch thresholding if classes are inverted
+    colored_img = cv2.imread(str(source_path))
+    red = colored_img[:, :, 0]
+    thresh = thresh == 255
+    thresh = thresh if np.mean(red[thresh]) < np.mean(red[~thresh]) else ~thresh
+    thresh = thresh.astype(int) * 255
+
     if ((thresh == 255) & (mask_img == 255)).sum().item() == 0:
         return thresh, size, 1, ret
 

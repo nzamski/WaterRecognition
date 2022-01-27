@@ -31,6 +31,10 @@ def train_model(classifier, fig, file, title):
     f1_per_iter = list()
     # pre-training
     classifier.fit(np.random.rand(2, 3), np.array([0, 1]))
+
+    print(classifier.coef_)
+    print(len(classifier.coef_) + len(classifier.intercept_))
+
     prediction = classifier.predict(normalized_test)
     test['prediction'] = prediction
     test['correct_prediction'] = (test['value'] == test['prediction'])
@@ -54,7 +58,7 @@ def train_model(classifier, fig, file, title):
 
 if __name__ == '__main__':
     classifiers = [LogisticRegression(max_iter=1, warm_start=True),
-                   SGDClassifier(loss='hinge', max_iter=1, warm_start=True, alpha=0.1)]
+                   SGDClassifier(loss='hinge', max_iter=1, warm_start=True, alpha=1)]
 
     figure_outputs = ['Logit F1 Per Iteration.png',
                       'SGD F1 Per Iteration.png']
