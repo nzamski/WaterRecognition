@@ -34,18 +34,25 @@ def otsu_predict(source_path):
 
     size = source_img.shape[0] * source_img.shape[1]
     # switch thresholding if classes are inverted
+
+    # avg_frame = np.mean([source_img[0, 0],
+    #                      source_img[source_img.shape[0] - 1, 0],
+    #                      source_img[0, source_img.shape[1] - 1],
+    #                      source_img[source_img.shape[0] - 1, source_img.shape[1] - 1]])
+    # thresh = thresh if avg_frame < 128 else 255 - thresh
+
     colored_img = cv2.imread(str(source_path))
     red = colored_img[:, :, 0]
     thresh = thresh == 255
-    thresh = thresh if np.mean(red[thresh]) < np.mean(red[~thresh]) else ~thresh
+    thresh = thresh if np.mean(red[thresh]) > np.mean(red[~thresh]) else ~thresh
     thresh = thresh.astype(int) * 255
-
-    if ((thresh == 255) & (mask_img == 255)).sum().item() == 0:
-        return thresh, size, 1, ret
 
     predicted_positive = (thresh == 255).sum().item()
     true_positive = ((thresh == 255) & (mask_img == 255)).sum().item()
     false_negative = ((thresh == 0) & (mask_img == 255)).sum().item()
+
+    if true_positive == 0 or predicted_positive == 0:
+        return thresh, size, 0, ret
 
     recall = true_positive / (true_positive + false_negative)
     precision = true_positive / predicted_positive
