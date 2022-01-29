@@ -104,7 +104,7 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
                            'F1': [f1],
                            'Accuracy': [accuracy],
                            'Iteration Training Seconds': [epoch_seconds]})
-        df.to_csv('Water_Bodies_Results.csv', index=False, mode='a', header=False)
+        df.to_csv('Deep_Results.csv', index=False, mode='a', header=False)
         print(df)
 
     ### SAVE A PREDICTION ###

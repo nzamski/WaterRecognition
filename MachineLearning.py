@@ -85,8 +85,8 @@ if __name__ == '__main__':
     figure_outputs = ['Logit F1 Per Iteration.png',
                       'SGD F1 Per Iteration.png']
 
-    file_outputs = ['test_per_pixel_Logit.csv',
-                    'test_per_pixel_SGD.csv']
+    file_outputs = ['Logit_Results.csv',
+                    'SGD_Results.csv']
 
     plot_titles = ['Logistic Regression',
                    'Stochastic Gradient Descent']
