@@ -2,8 +2,6 @@
 /Water Bodies Dataset/
 /Otsu Images/
 
-*.png
-*.jpg
 *.pt
 
 rgb_test.csv
