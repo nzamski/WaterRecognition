@@ -38,19 +38,20 @@ class WaterDataset(Dataset):
 
     def __getitem__(self, index):
         img_path = self.sources[index]
+        img_num = int(str(img_path).rsplit('_', 1)[1].split('.')[0])
         source = functional.to_tensor(PIL.Image.open(img_path))
         label = functional.to_tensor(PIL.Image.open(get_mask_path(img_path)).convert('L'))
 
         if self.transform_source:
             source = self.transform_source(source)
-        if self.transform_both:
+        elif self.transform_both:
             source = self.transform_both(source)
             label = self.transform_both(label)
             label = (label < 0.5).float()
 
             assert len(label.unique()) <= 2, "threshold didn't work"
 
-        return source, label
+        return source, label, img_num
 
 
 def get_train_test_loaders(batch_size, length):
@@ -59,13 +60,13 @@ def get_train_test_loaders(batch_size, length):
                                                    transform_both=torchvision.transforms.Resize((length, length))),
                               batch_size=batch_size,
                               pin_memory=True,
-                              num_workers=3,
+                              num_workers=1,
                               shuffle=True)
     test_loader = DataLoader(dataset=WaterDataset(test_path,
                                                   transform_both=torchvision.transforms.Resize((length, length))),
                              batch_size=batch_size,
                              pin_memory=True,
-                             num_workers=3,
+                             num_workers=1,
                              shuffle=False)
 
-    return train_loader, test_loader
+    return train_loader, test_loader, test_path
