@@ -1,6 +1,9 @@
 /.idea/
 /Water Bodies Dataset/
 /Otsu Images/
+/Logit Images/
+/Deep Images/
+
 
 *.pt
 

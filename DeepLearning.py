@@ -77,7 +77,7 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
     torch.cuda.empty_cache()
 
 
-if __name__ == '__main__':
+def main():
     models = (Hidden1, Hidden2, Conv1, Conv2, Conv3)
     activation_funcs = (f.relu, f.leaky_relu)
     hidden_layer_sizes = (4000, 3000, 2000)
@@ -99,3 +99,7 @@ if __name__ == '__main__':
                 model_parameters = (image_normalized_length, hidden_layer_size, activation_func)
                 fit_model(model, model_parameters, loss_func, optimizer,
                           batch_size, image_normalized_length, num_of_epochs)
+
+
+if __name__ == '__main__':
+    main()

@@ -83,10 +83,14 @@ def count_all_rgb_mask_combs(path_list):
     return counts_df
 
 
-if __name__ == '__main__':
+def main():
     # export the modified data to CSV
     train, test = get_train_test_paths()
     rgb_train = count_all_rgb_mask_combs(train)
     rgb_train.to_csv(index=False)
     rgb_test = count_all_rgb_mask_combs(test)
     rgb_test.to_csv(index=False)
+
+
+if __name__ == '__main__':
+    main()

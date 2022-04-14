@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 from pathlib import Path
+from datetime import datetime
 
 
 def get_source_paths():
@@ -34,7 +35,10 @@ def otsu_predict(source_path):
     mask_img = get_mask(source_path)
     gray_img = cv2.imread(source_path, 0)
 
+    start = datetime.now()
     ret, thresh = cv2.threshold(gray_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    end = datetime.now()
+    duration = (end - start).total_seconds()
 
     # rule for thresh inversion by the red channel
     red = img[:, :, 0]
@@ -52,24 +56,27 @@ def otsu_predict(source_path):
 
     f1 = true_positive / denominator
 
-    return thresh, height * width, f1, ret
+    return thresh, height * width, f1, ret, duration
 
 
 def main():
-    scores, thresholds, image_size, indices = list(), list(), list(), list()
+    scores, thresholds, image_size, indices, durations = list(), list(), list(), list(), list()
     source_paths = get_source_paths()
     for source_path in tqdm(source_paths):
-        segmented, size, f1, ret = otsu_predict(source_path)
+        prediction, size, f1, ret, duration = otsu_predict(source_path)
         scores.append(f1)
         thresholds.append(ret)
         image_size.append(size)
         index = get_img_index(source_path)
         indices.append(index)
-        plt.imsave(f'Otsu Images{os.sep}{index}.jpg', segmented, cmap='Greys')
+        durations.append(duration)
+        path = f'{os.getcwd()}{os.sep}Otsu Images{os.sep}otsu_{index} ({round(f1, 3)}).jpg'
+        plt.imsave(path, prediction, cmap='Greys')
     df = pd.DataFrame(data={'F1': scores,
                             'Threshold': thresholds,
                             'Image Size': image_size,
-                            'Index': indices})
+                            'Index': indices,
+                            'Duration': durations})
     df.to_csv('Otsu_Results.csv', index=False)
 
 

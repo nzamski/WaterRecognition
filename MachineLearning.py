@@ -78,7 +78,7 @@ def train_model(classifier, fig, file, title):
         pickle.dump(classifier, open_file)
 
 
-if __name__ == '__main__':
+def main():
     classifiers = [LogisticRegression(max_iter=1, warm_start=True),
                    SGDClassifier(loss='hinge', max_iter=1, warm_start=True, alpha=0.05)]
 
@@ -94,3 +94,7 @@ if __name__ == '__main__':
     for classifier, fig, file, title in zip(classifiers, figure_outputs, file_outputs, plot_titles):
         if title == 'Logistic Regression':
             train_model(classifier, fig, file, title)
+
+
+if __name__ == '__main__':
+    main()

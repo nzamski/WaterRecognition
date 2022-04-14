@@ -177,9 +177,13 @@ class DataLoader:
         return results
 
 
-if __name__ == '__main__':
+def main():
     main_path = r'C:\Users\nzams\Desktop\WaterRecognition\Water Bodies Dataset\Images\*'
     path_list, length = [path for path in glob(main_path)[:5]], 3
     loader = DataLoader(path_list, length)
     for x, y in loader:
         pass
+
+
+if __name__ == '__main__':
+    main()

@@ -1,8 +1,8 @@
 import os
-import PIL
 import random
 import torchvision
 
+from PIL import Image
 from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import functional
@@ -39,8 +39,8 @@ class WaterDataset(Dataset):
     def __getitem__(self, index):
         img_path = self.sources[index]
         img_num = int(str(img_path).rsplit('_', 1)[1].split('.')[0])
-        source = functional.to_tensor(PIL.Image.open(img_path))
-        label = functional.to_tensor(PIL.Image.open(get_mask_path(img_path)).convert('L'))
+        source = functional.to_tensor(Image.open(img_path))
+        label = functional.to_tensor(Image.open(get_mask_path(img_path)).convert('L'))
 
         if self.transform_source:
             source = self.transform_source(source)

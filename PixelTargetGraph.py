@@ -27,5 +27,9 @@ def rgb_graph(path):
     plt.show()
 
 
-if __name__ == '__main__':
+def main():
     rgb_graph('rgb_value_count.csv')
+
+
+if __name__ == '__main__':
+    main()
