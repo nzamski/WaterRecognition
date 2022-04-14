@@ -4,8 +4,8 @@
 /Logit Images/
 /Deep Images/
 
-
 *.pt
+
 
 rgb_test.csv
 rgb_train.csv
