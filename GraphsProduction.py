@@ -29,8 +29,8 @@ def comparison():
     plot = sns.lineplot(data=df, x='Iteration', y='F1', hue='Method')
     plot.axhline(baseline_f1, ls='--', c='k', label='Baseline')
     plot.set(ylim=(0, 1))
-    plot.set_title('All 3 methods: F1-score for best models')
-    plt.savefig('comparison.svg', dpi=2540)  # 720 | 2540
+    plot.set_title('All 3 methods: F1-score over the iterations')
+    plt.savefig('comparison.png', dpi=2540)
     plt.show()
 
 
@@ -50,16 +50,19 @@ def method_plot():
     machine = pd.concat([sgd, logit]).set_index([[i for i in range(0, 20)]])
 
     plot = sns.boxplot(data=deep, x='Model Name', y='F1', hue='Activation Function')
+    plot.set(ylim=(0, 1))
+    plot.set_title('Deep Learning: F1-score for different activation function')
+    plt.savefig('deep1.png', dpi=2540)
+    plt.show()
 
 
 def duration_plot():
-    df = pd.DataFrame(data=[["Otsu's Method", 0.015621e-3], ['Logistic Regression', 0.023e-3], ['LochNet', 6.7e-3]],
+    df = pd.DataFrame(data=[["Otsu's Method", 1.6e-7], ['Logistic Regression', 0.023e-3], ['LochNet', 6.7e-3]],
                       columns=['Method', 'Classification Time (seconds)'])
     plot = sns.barplot(data=df, x='Method', y='Classification Time (seconds)', log=True)
-    # plot.set(ylim=(0.72, 0.875))
     plot.bar_label(plot.containers[0])
-    plot.set_title('All 3 methods: Image Classification Time')
-    plt.savefig('durations.svg', dpi=2540)
+    plot.set_title('All 3 methods: average classification time per image')
+    plt.savefig('durations.png', dpi=2540)
     plt.show()
 
 
@@ -76,12 +79,12 @@ def deep_scatter():
     plot.set(ylim=(0.72, 0.875))
     plot.set_title('Deep Learning: F1-score for different combinations')
     plt.tight_layout()
-    plt.savefig('4.png', dpi=2540)
+    plt.savefig('deep_scatter.png', dpi=2540)
     plt.show()
 
 
 def main():
-    duration_plot()
+    comparison()
 
 
 if __name__ == '__main__':
