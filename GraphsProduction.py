@@ -16,6 +16,7 @@ def comparison():
     deep = deep[deep['Hidden Layer Size'] == 2000]
     deep = deep[deep['Activation Function'] == 'relu']
     deep = deep[['Iteration', 'F1', 'Model Name']]
+    deep.loc[deep['Iteration'] == 1, 'F1'] = 0
 
     otsu = pd.DataFrame({'Iteration': [i + 1 for i in range(0, 10)],
                          'F1': [otsu['F1'].median() for _ in range(0, 10)]})
@@ -30,7 +31,7 @@ def comparison():
     plot.axhline(baseline_f1, ls='--', c='k', label='Baseline')
     plot.set(ylim=(0, 1))
     plot.set_title('All 3 methods: F1-score over the iterations')
-    plt.savefig('comparison.png', dpi=2540)
+    plt.savefig('comparison.svg', dpi=2540)
     plt.show()
 
 
@@ -49,20 +50,31 @@ def method_plot():
     sgd['Model Name'] = 'Stochastic Gradient Descent'
     machine = pd.concat([sgd, logit]).set_index([[i for i in range(0, 20)]])
 
-    plot = sns.boxplot(data=deep, x='Model Name', y='F1', hue='Activation Function')
+    plot = sns.lineplot(data=machine, x='Iteration', y='F1', hue='Model Name')
+    plot.axhline(baseline_f1, ls='--', c='k', label='Baseline')
     plot.set(ylim=(0, 1))
-    plot.set_title('Deep Learning: F1-score for different activation function')
-    plt.savefig('deep1.png', dpi=2540)
+    plot.set_title('Machine Learning: F1-score over the iterations')
+    plt.savefig('machine.svg', dpi=2540)
     plt.show()
 
 
-def duration_plot():
+def time_plot():
     df = pd.DataFrame(data=[["Otsu's Method", 1.6e-7], ['Logistic Regression', 0.023e-3], ['LochNet', 6.7e-3]],
-                      columns=['Method', 'Classification Time (seconds)'])
-    plot = sns.barplot(data=df, x='Method', y='Classification Time (seconds)', log=True)
+                      columns=['Algorithm', 'Classification Time (seconds)'])
+    plot = sns.barplot(data=df, x='Algorithm', y='Classification Time (seconds)', log=True)
     plot.bar_label(plot.containers[0])
-    plot.set_title('All 3 methods: average classification time per image')
-    plt.savefig('durations.png', dpi=2540)
+    plot.set_title('Average Image Classification Time Comparison')
+    plt.savefig('time.svg', dpi=2540)  # 2540
+    plt.show()
+
+
+def memory_plot():
+    df = pd.DataFrame(data=[["Otsu's Method", 0], ['Logistic Regression', 730], ['LochNet', 396e6]],
+                      columns=['Algorithm', 'Memory Usage (bytes)'])
+    plot = sns.barplot(data=df, x='Algorithm', y='Memory Usage (bytes)', log=True)
+    plot.bar_label(plot.containers[0])
+    plot.set_title('Memory Usage Comparison')
+    plt.savefig('memory.svg', dpi=2540)  # 2540
     plt.show()
 
 
@@ -83,9 +95,5 @@ def deep_scatter():
     plt.show()
 
 
-def main():
-    comparison()
-
-
 if __name__ == '__main__':
-    main()
+    method_plot()

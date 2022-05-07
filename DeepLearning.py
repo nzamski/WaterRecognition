@@ -12,7 +12,7 @@ from DataLoader import get_train_test_loaders
 
 
 def fit_model(model, model_parameters, loss_function, optimizer, batch_size, image_normalized_length, num_of_epochs):
-    train_loader, test_loader = get_train_test_loaders(batch_size, image_normalized_length)
+    train_loader, test_loader, _ = get_train_test_loaders(batch_size, image_normalized_length)
     # if GPU is available, prepare it for heavy calculations
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model(*model_parameters).to(device)
@@ -22,7 +22,7 @@ def fit_model(model, model_parameters, loss_function, optimizer, batch_size, ima
         model.train()
         epoch_start = datetime.now()
         epoch_loss = 0
-        for image, mask in tqdm(train_loader):
+        for image, mask, _ in tqdm(train_loader):
             x = image.float().to(device)
             tag = mask.flatten().long().to(device)
             optimizer.zero_grad()
