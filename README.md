@@ -1,4 +1,4 @@
-## WaterRecognition
+## Water Recognition
 This repository contains all programs, models and results files needed for my research.
 Basically, there are 3 types of models built here (from high complexity to low):
  - Deep Learning Neural Networks (including CNNs)
